@@ -1,198 +1,178 @@
--- RobloxESP v12 by @gde_patrick (финалка)
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local LocalPlayer = Players.LocalPlayer
+-- RobloxLabubuStealer ULTIMATE v2 by @gde_patrick
 
-local ESPColor = Color3.new(1, 0, 0)
-local ESPFolder = Instance.new("Folder", game.CoreGui)
-ESPFolder.Name = "patrick_esp"
+local plr = game.Players.LocalPlayer
+local mouse = plr:GetMouse()
+local rs = game:GetService("RunService")
+local gui = Instance.new("ScreenGui", game.CoreGui)
+local frame = Instance.new("Frame", gui)
+frame.Position = UDim2.new(0.05,0,0.1,0)
+frame.Size = UDim2.new(0,260,0,380)
+frame.BackgroundColor3 = Color3.fromRGB(40,0,70)
+frame.Active, frame.Draggable = true, true
 
-local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-ScreenGui.Name = "RobloxESPv12"
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1,0,0,30)
+title.Text = "RobloxLabubuStealer ULTIMATE v2 by @gde_patrick"
+title.TextColor3 = Color3.fromRGB(255,255,255)
+title.BackgroundColor3 = Color3.fromRGB(70,0,140)
+title.TextScaled = true
 
--- UI
-local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 250, 0, 320)
-MainFrame.Position = UDim2.new(0, 100, 0, 100)
-MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-MainFrame.Active = true
-MainFrame.Draggable = true
-
-local Title = Instance.new("TextLabel", MainFrame)
-Title.Size = UDim2.new(1, -30, 0, 30)
-Title.Text = "RobloxESP v12 by @gde_patrick"
-Title.TextColor3 = Color3.fromRGB(255, 0, 100)
-Title.BackgroundTransparency = 1
-Title.Font = Enum.Font.SourceSansBold
-Title.TextSize = 16
-Title.TextXAlignment = Enum.TextXAlignment.Left
-
-local MinimizeBtn = Instance.new("TextButton", MainFrame)
-MinimizeBtn.Size = UDim2.new(0, 30, 0, 30)
-MinimizeBtn.Position = UDim2.new(1, -30, 0, 0)
-MinimizeBtn.Text = "_"
-MinimizeBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
-MinimizeBtn.TextColor3 = Color3.new(1,1,1)
-
-local ColorBox = Instance.new("TextBox", MainFrame)
-ColorBox.Size = UDim2.new(1, 0, 0, 25)
-ColorBox.Position = UDim2.new(0,0,0,30)
-ColorBox.Text = "255,0,0"
-ColorBox.BackgroundColor3 = Color3.fromRGB(50,50,50)
-ColorBox.TextColor3 = Color3.new(1,1,1)
-ColorBox.TextSize = 14
-
-ColorBox.FocusLost:Connect(function()
-	local r,g,b = string.match(ColorBox.Text,"(%d+),(%d+),(%d+)")
-	if r and g and b then
-		ESPColor = Color3.fromRGB(tonumber(r),tonumber(g),tonumber(b))
-	end
-end)
-
-local Options = {
-	BoxESP = true,
-	HealthBar = true,
-	Distance = true,
-	Tracers = true,
-	NameESP = true,
+local btnY, btnH = 35, 25
+local buttons, settings = {}, {
+    autoFarm=false, autoBuy=false, autoSell=false, fullAutoPlay=false,
+    esp=false, rainbow=false, healthbar=false, lines=false, fps=true,
+    color=Color3.fromRGB(255,0,255), minimized=false
 }
-local ToggleButtons = {}
-local y = 55
-for name,_ in pairs(Options) do
-	local btn = Instance.new("TextButton", MainFrame)
-	btn.Size = UDim2.new(1, 0, 0, 25)
-	btn.Position = UDim2.new(0,0,0,y)
-	btn.Text = name.." : ON"
-	btn.BackgroundColor3 = Color3.fromRGB(50,50,50)
-	btn.TextColor3 = Color3.new(1,1,1)
-	btn.Font = Enum.Font.SourceSans
-	btn.TextSize = 14
-	btn.MouseButton1Click:Connect(function()
-		Options[name] = not Options[name]
-		btn.Text = name.." : "..(Options[name] and "ON" or "OFF")
-	end)
-	table.insert(ToggleButtons, btn)
-	y += 25
+
+local function makeButton(text)
+    local btn = Instance.new("TextButton", frame)
+    btn.Position = UDim2.new(0,0,0,btnY)
+    btn.Size = UDim2.new(1,0,0,btnH)
+    btn.Text = text..": OFF"
+    btnY = btnY + btnH + 5
+    return btn
 end
 
-local Stats = Instance.new("TextLabel", MainFrame)
-Stats.Position = UDim2.new(0,0,1,-20)
-Stats.Size = UDim2.new(1,0,0,20)
-Stats.BackgroundTransparency = 1
-Stats.TextColor3 = Color3.new(1,1,1)
-Stats.Font = Enum.Font.SourceSans
-Stats.TextSize = 14
+buttons.autoFarm = makeButton("AutoFarm")
+buttons.autoBuy = makeButton("AutoBuy")
+buttons.autoSell = makeButton("AutoSell")
+buttons.fullAutoPlay = makeButton("FullAutoPlay")
+buttons.esp = makeButton("ESP")
+buttons.rainbow = makeButton("RainbowESP")
+buttons.healthbar = makeButton("HealthBar")
+buttons.lines = makeButton("Lines")
 
-RunService.RenderStepped:Connect(function()
-	local fps = math.floor(1 / RunService.RenderStepped:Wait())
-	Stats.Text = "FPS: "..fps
-end)
+local minimize = Instance.new("TextButton", frame)
+minimize.Position = UDim2.new(0,0,1,-25)
+minimize.Size = UDim2.new(1,0,0,25)
+minimize.Text = "Minimize"
 
-local IsMinimized = false
-MinimizeBtn.MouseButton1Click:Connect(function()
-	IsMinimized = not IsMinimized
-	for _,btn in pairs(ToggleButtons) do btn.Visible = not IsMinimized end
-	Stats.Visible = not IsMinimized
-	ColorBox.Visible = not IsMinimized
-	Title.Visible = not IsMinimized
-	MainFrame.Size = IsMinimized and UDim2.new(0, 120, 0, 30) or UDim2.new(0, 250, 0, 320)
-	MinimizeBtn.Text = IsMinimized and "☰" or "_"
-end)
-
-local function createESP(plr)
-	if plr == LocalPlayer then return end
-
-	local function refresh()
-		if not plr.Character or not plr.Character:FindFirstChild("HumanoidRootPart") then return end
-		local HRP = plr.Character.HumanoidRootPart
-
-		local box = Instance.new("BoxHandleAdornment", ESPFolder)
-		box.Adornee = HRP
-		box.Size = Vector3.new(4,6,2)
-		box.Color3 = ESPColor
-		box.AlwaysOnTop = true
-		box.ZIndex = 5
-		box.Transparency = 0.3
-		box.Name = plr.Name.."_Box"
-
-		local line = Instance.new("Beam", ESPFolder)
-		local at0 = Instance.new("Attachment", workspace.CurrentCamera)
-		local at1 = Instance.new("Attachment", HRP)
-		line.Attachment0 = at0
-		line.Attachment1 = at1
-		line.Color = ColorSequence.new(ESPColor)
-		line.Width0 = 0.05
-		line.Width1 = 0.05
-		line.FaceCamera = true
-		line.Name = plr.Name.."_Line"
-
-		local gui = Instance.new("BillboardGui", ESPFolder)
-		gui.Adornee = plr.Character:WaitForChild("Head")
-		gui.Size = UDim2.new(0,100,0,40)
-		gui.AlwaysOnTop = true
-		gui.Name = plr.Name.."_Name"
-
-		local name = Instance.new("TextLabel", gui)
-		name.Position = UDim2.new(0,0,0,-10)
-		name.Size = UDim2.new(1,0,0,20)
-		name.Text = "Обезьяна"
-		name.TextColor3 = ESPColor
-		name.BackgroundTransparency = 1
-		name.Font = Enum.Font.SourceSansBold
-		name.TextSize = 14
-
-		local dist = Instance.new("TextLabel", gui)
-		dist.Position = UDim2.new(0,0,0,20)
-		dist.Size = UDim2.new(1,0,0,20)
-		dist.TextColor3 = ESPColor
-		dist.BackgroundTransparency = 1
-		dist.Font = Enum.Font.SourceSans
-		dist.TextSize = 12
-
-		RunService.RenderStepped:Connect(function()
-			if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-				local d = (LocalPlayer.Character.HumanoidRootPart.Position - plr.Character.HumanoidRootPart.Position).Magnitude
-				dist.Text = Options.Distance and string.format("Dist: %.0f", d) or ""
-				name.Text = Options.NameESP and "Обезьяна" or ""
-				box.Visible = Options.BoxESP
-				line.Enabled = Options.Tracers
-				box.Color3 = ESPColor
-				line.Color = ColorSequence.new(ESPColor)
-				name.TextColor3 = ESPColor
-				dist.TextColor3 = ESPColor
-			end
-		end)
-	end
-
-	refresh()
-	plr.CharacterAdded:Connect(function()
-		wait(1)
-		for _,v in pairs(ESPFolder:GetChildren()) do
-			if string.find(v.Name, plr.Name) then v:Destroy() end
-		end
-		refresh()
-	end)
+-- Переключатели
+for k,btn in pairs(buttons) do
+    btn.MouseButton1Click:Connect(function()
+        settings[k] = not settings[k]
+        btn.Text = btn.Text:match(".*:")..(settings[k] and " ON" or " OFF")
+    end)
 end
 
-for _,p in pairs(Players:GetPlayers()) do
-	if p ~= LocalPlayer then
-		createESP(p)
-	end
-end
-Players.PlayerAdded:Connect(function(p)
-	p.CharacterAdded:Connect(function()
-		wait(1)
-		createESP(p)
-	end)
+minimize.MouseButton1Click:Connect(function()
+    settings.minimized=not settings.minimized
+    for _,btn in pairs(buttons) do btn.Visible=not settings.minimized end
+    title.Visible=not settings.minimized
+    minimize.Text=settings.minimized and "Maximize" or "Minimize"
 end)
 
--- подпись
-local Tag = Instance.new("TextLabel", ScreenGui)
-Tag.Size = UDim2.new(0,200,0,30)
-Tag.Position = UDim2.new(0.5,-100,0,0)
-Tag.BackgroundTransparency = 1
-Tag.Text = "@gde_patrick"
-Tag.Font = Enum.Font.SourceSansBold
-Tag.TextSize = 24
-Tag.TextStrokeTransparency = 0.3
-Tag.TextColor3 = Color3.new(1,0,0)
+-- FPS, PING
+local info=Instance.new("TextLabel",frame)
+info.Position=UDim2.new(0,0,1,-50)
+info.Size=UDim2.new(1,0,0,25)
+info.BackgroundTransparency=1
+info.TextColor3=Color3.fromRGB(255,255,255)
+info.TextScaled=true
+
+local fps,ping=0,0
+spawn(function()
+    while wait(1) do
+        fps=math.floor(rs.RenderStepped:Wait() and 1/wait())
+        pcall(function() ping=plr:GetNetworkPing()*1000 end)
+        info.Text="FPS: "..fps.." | Ping: "..math.floor(ping)
+    end
+end)
+
+-- Радужный цвет
+local function rainbow()
+    local t=tick()%5/5
+    return Color3.fromHSV(t,1,1)
+end
+
+-- ESP и визуалы
+spawn(function()
+    while wait() do
+        if settings.esp then
+            for _,p in pairs(game.Players:GetPlayers()) do
+                if p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p~=plr then
+                    if not p.Character:FindFirstChild("ESPBill") then
+                        local bb=Instance.new("BillboardGui",p.Character)
+                        bb.Name="ESPBill";bb.Size=UDim2.new(0,100,0,40);bb.AlwaysOnTop=true
+                        local tl=Instance.new("TextLabel",bb)
+                        tl.Size=UDim2.new(1,0,1,0)
+                        tl.BackgroundTransparency=1;tl.Text="Обезьяна"
+                        tl.TextStrokeTransparency=0
+                        tl.TextScaled=true
+                        bb.StudsOffset=Vector3.new(0,3,0)
+                        if settings.healthbar and p.Character:FindFirstChild("Humanoid") then
+                            local hb=Instance.new("TextLabel",bb)
+                            hb.Name="HB";hb.Size=UDim2.new(1,0,0,10)
+                            hb.Position=UDim2.new(0,0,1,0);hb.BackgroundTransparency=0.5
+                            hb.BackgroundColor3=Color3.fromRGB(0,255,0)
+                        end
+                    else
+                        local tl=p.Character.ESPBill:FindFirstChildOfClass("TextLabel")
+                        tl.TextColor3=settings.rainbow and rainbow() or settings.color
+                        if settings.healthbar and p.Character:FindFirstChild("Humanoid") then
+                            local hb=p.Character.ESPBill:FindFirstChild("HB")
+                            if hb then hb.Size=UDim2.new(p.Character.Humanoid.Health/p.Character.Humanoid.MaxHealth,0,0,10) end
+                        end
+                    end
+                end
+            end
+        else
+            for _,p in pairs(game.Players:GetPlayers()) do
+                if p.Character and p.Character:FindFirstChild("ESPBill") then
+                    p.Character.ESPBill:Destroy()
+                end
+            end
+        end
+    end
+end)
+
+-- Линии
+local cam=workspace.CurrentCamera
+spawn(function()
+    while wait() do
+        if settings.lines then
+            for _,v in pairs(gui:GetChildren()) do if v:IsA("Frame") and v.Name=="Line" then v:Destroy() end end
+            for _,p in pairs(game.Players:GetPlayers()) do
+                if p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p~=plr then
+                    local a,b=cam:WorldToViewportPoint(p.Character.HumanoidRootPart.Position)
+                    if b then
+                        local l=Instance.new("Frame",gui)
+                        l.Name="Line";l.BackgroundColor3=settings.rainbow and rainbow() or settings.color
+                        l.BorderSizePixel=0
+                        l.Size=UDim2.new(0,2,0,(a.Y-50))
+                        l.Position=UDim2.new(0,a.X,0,50)
+                    end
+                end
+            end
+        else
+            for _,v in pairs(gui:GetChildren()) do if v:IsA("Frame") and v.Name=="Line" then v:Destroy() end end
+        end
+    end
+end)
+
+-- FullAutoPlay
+spawn(function()
+    while wait(3) do
+        if settings.fullAutoPlay then
+            local base,price= nil,0
+            for _,b in pairs(workspace.Bases:GetChildren()) do
+                if b:FindFirstChild("Owner") and b.Owner.Value~=plr.Name and b.Open.Value==true then
+                    local v=b:FindFirstChild("Value") and b.Value.Value or 0
+                    if v>price then base=b;price=v end
+                end
+            end
+            if base then
+                plr.Character.HumanoidRootPart.CFrame=base.PrimaryPart.CFrame+Vector3.new(0,5,0)
+                wait(1)
+                local my=workspace.Bases:FindFirstChild(plr.Name.."Base")
+                if my then plr.Character.HumanoidRootPart.CFrame=my.PrimaryPart.CFrame+Vector3.new(0,5,0) end
+            end
+        end
+    end
+end)
+
+-- Подпись
+local sign=Instance.new("TextLabel",gui)
+sign.Size=UDim2.new(0,200,0,30);sign.Position=UDim2.new(1,-210,1,-40)
+sign.Text="@gde_patrick";sign.TextColor3=Color3.fromRGB(255,50,150)
+sign.BackgroundTransparency=1;sign.TextStrokeTransparency=0
