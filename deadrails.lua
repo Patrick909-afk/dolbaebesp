@@ -1,142 +1,196 @@
-local plr = game.Players.LocalPlayer
-local speeds = 1
+local main = Instance.new("ScreenGui")
+local Frame = Instance.new("Frame")
+local up = Instance.new("TextButton")
+local down = Instance.new("TextButton")
+local toggleFly = Instance.new("TextButton")
+local title = Instance.new("TextLabel")
+local plus = Instance.new("TextButton")
+local speedLabel = Instance.new("TextLabel")
+local minus = Instance.new("TextButton")
+local close = Instance.new("TextButton")
+local minimize = Instance.new("TextButton")
+local expand = Instance.new("TextButton")
+
 local flying = false
+local speed = 1
+local player = game.Players.LocalPlayer
+local hrp = player.Character:WaitForChild("HumanoidRootPart")
+local bv = Instance.new("BodyVelocity")
+bv.MaxForce = Vector3.new(0, 0, 0)
+bv.Velocity = Vector3.new(0, 0, 0)
+bv.Parent = hrp
 
--- 🌟 UI
-local gui = Instance.new("ScreenGui", plr.PlayerGui)
-gui.Name = "DeadRailsCheat"
+main.Name = "PatrickFly"
+main.Parent = player:WaitForChild("PlayerGui")
+main.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+main.ResetOnSpawn = false
 
-local frame = Instance.new("Frame", gui)
-frame.BackgroundColor3 = Color3.fromRGB(0, 255, 170)
-frame.Position = UDim2.new(0.1, 0, 0.4, 0)
-frame.Size = UDim2.new(0, 190, 0, 57)
-frame.Active = true
-frame.Draggable = true
+Frame.Parent = main
+Frame.BackgroundColor3 = Color3.fromRGB(57, 255, 20)
+Frame.Position = UDim2.new(0.1, 0, 0.4, 0)
+Frame.Size = UDim2.new(0, 190, 0, 57)
+Frame.Draggable = true
+Frame.Active = true
 
-local title = Instance.new("TextLabel", frame)
-title.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-title.Size = UDim2.new(1, 0, 0, 28)
-title.Text = "🌌 DeadRails Cheat 🌌"
-title.TextColor3 = Color3.fromRGB(0, 255, 170)
-title.TextScaled = true
+title.Parent = Frame
+title.BackgroundColor3 = Color3.fromRGB(0, 255, 127)
+title.Size = UDim2.new(0, 100, 0, 28)
+title.Position = UDim2.new(0.48, 0, 0, 0)
 title.Font = Enum.Font.SourceSansBold
+title.Text = "Patrick Fly"
+title.TextColor3 = Color3.fromRGB(0, 0, 0)
+title.TextScaled = true
 
-local up = Instance.new("TextButton", frame)
-up.Text = "UP"
+up.Name = "up"
+up.Parent = Frame
+up.BackgroundColor3 = Color3.fromRGB(0, 255, 127)
 up.Size = UDim2.new(0, 44, 0, 28)
-up.Position = UDim2.new(0, 0, 0, 28)
-up.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+up.Font = Enum.Font.SourceSans
+up.Text = "UP"
+up.TextColor3 = Color3.fromRGB(0, 0, 0)
+up.TextSize = 14
 
-local down = Instance.new("TextButton", frame)
-down.Text = "DOWN"
+down.Name = "down"
+down.Parent = Frame
+down.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
+down.Position = UDim2.new(0, 0, 0.5, 0)
 down.Size = UDim2.new(0, 44, 0, 28)
-down.Position = UDim2.new(0, 0, 0, 56)
-down.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+down.Font = Enum.Font.SourceSans
+down.Text = "DOWN"
+down.TextColor3 = Color3.fromRGB(0, 0, 0)
+down.TextSize = 14
 
-local plus = Instance.new("TextButton", frame)
-plus.Text = "+"
+toggleFly.Name = "toggleFly"
+toggleFly.Parent = Frame
+toggleFly.BackgroundColor3 = Color3.fromRGB(0, 255, 127)
+toggleFly.Position = UDim2.new(0.7, 0, 0.5, 0)
+toggleFly.Size = UDim2.new(0, 56, 0, 28)
+toggleFly.Font = Enum.Font.SourceSans
+toggleFly.Text = "fly"
+toggleFly.TextColor3 = Color3.fromRGB(0, 0, 0)
+toggleFly.TextSize = 14
+
+plus.Name = "plus"
+plus.Parent = Frame
+plus.BackgroundColor3 = Color3.fromRGB(0, 255, 127)
+plus.Position = UDim2.new(0.23, 0, 0, 0)
 plus.Size = UDim2.new(0, 45, 0, 28)
-plus.Position = UDim2.new(0.25, 0, 0, 28)
-plus.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+plus.Font = Enum.Font.SourceSans
+plus.Text = "+"
+plus.TextColor3 = Color3.fromRGB(0, 0, 0)
+plus.TextScaled = true
 
-local minus = Instance.new("TextButton", frame)
-minus.Text = "-"
-minus.Size = UDim2.new(0, 45, 0, 28)
-minus.Position = UDim2.new(0.25, 0, 0, 56)
-minus.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-
-local speedLabel = Instance.new("TextLabel", frame)
-speedLabel.Text = tostring(speeds)
+speedLabel.Name = "speed"
+speedLabel.Parent = Frame
+speedLabel.BackgroundColor3 = Color3.fromRGB(0, 255, 127)
+speedLabel.Position = UDim2.new(0.48, 0, 0.5, 0)
 speedLabel.Size = UDim2.new(0, 44, 0, 28)
-speedLabel.Position = UDim2.new(0.5, 0, 0, 28)
-speedLabel.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-speedLabel.TextColor3 = Color3.fromRGB(0, 255, 170)
+speedLabel.Font = Enum.Font.SourceSans
+speedLabel.Text = tostring(speed)
+speedLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
 speedLabel.TextScaled = true
 
-local toggle = Instance.new("TextButton", frame)
-toggle.Text = "Fly"
-toggle.Size = UDim2.new(0, 56, 0, 28)
-toggle.Position = UDim2.new(0.65, 0, 0, 28)
-toggle.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+minus.Name = "minus"
+minus.Parent = Frame
+minus.BackgroundColor3 = Color3.fromRGB(0, 255, 127)
+minus.Position = UDim2.new(0.23, 0, 0.5, 0)
+minus.Size = UDim2.new(0, 45, 0, 28)
+minus.Font = Enum.Font.SourceSans
+minus.Text = "-"
+minus.TextColor3 = Color3.fromRGB(0, 0, 0)
+minus.TextScaled = true
 
-local closeBtn = Instance.new("TextButton", frame)
-closeBtn.Text = "X"
-closeBtn.Size = UDim2.new(0, 28, 0, 28)
-closeBtn.Position = UDim2.new(0.85, 0, 0, 0)
-closeBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+close.Name = "close"
+close.Parent = Frame
+close.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+close.Size = UDim2.new(0, 45, 0, 28)
+close.Font = Enum.Font.SourceSans
+close.Text = "X"
+close.TextSize = 20
+close.Position = UDim2.new(0, 0, -1, 27)
 
--- ✈️ Полёт
-local cam = workspace.CurrentCamera
-local uis = game:GetService("UserInputService")
-local rs = game:GetService("RunService")
+minimize.Name = "minimize"
+minimize.Parent = Frame
+minimize.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
+minimize.Size = UDim2.new(0, 45, 0, 28)
+minimize.Text = "-"
+minimize.Position = UDim2.new(0, 44, -1, 27)
 
-toggle.MouseButton1Click:Connect(function()
-    flying = not flying
-    toggle.Text = flying and "Stop" or "Fly"
+expand.Name = "expand"
+expand.Parent = Frame
+expand.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
+expand.Size = UDim2.new(0, 45, 0, 28)
+expand.Text = "+"
+expand.Position = UDim2.new(0, 44, -1, 57)
+expand.Visible = false
+
+-- Полёт
+toggleFly.MouseButton1Click:Connect(function()
+	flying = not flying
+	bv.MaxForce = flying and Vector3.new(9e9, 9e9, 9e9) or Vector3.new(0, 0, 0)
 end)
 
 plus.MouseButton1Click:Connect(function()
-    speeds += 1
-    speedLabel.Text = tostring(speeds)
+	speed = speed + 1
+	speedLabel.Text = tostring(speed)
 end)
 
 minus.MouseButton1Click:Connect(function()
-    speeds = math.max(1, speeds-1)
-    speedLabel.Text = tostring(speeds)
+	if speed > 1 then
+		speed = speed - 1
+		speedLabel.Text = tostring(speed)
+	end
+end)
+
+game:GetService("RunService").RenderStepped:Connect(function()
+	if flying then
+		bv.Velocity = workspace.CurrentCamera.CFrame.LookVector * speed
+	else
+		bv.Velocity = Vector3.new(0, 0, 0)
+	end
 end)
 
 up.MouseButton1Click:Connect(function()
-    local hrp = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
-    if hrp then hrp.CFrame += Vector3.new(0,1,0) end
+	hrp.CFrame = hrp.CFrame * CFrame.new(0, 2, 0)
 end)
 
 down.MouseButton1Click:Connect(function()
-    local hrp = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
-    if hrp then hrp.CFrame -= Vector3.new(0,1,0) end
+	hrp.CFrame = hrp.CFrame * CFrame.new(0, -2, 0)
 end)
 
-closeBtn.MouseButton1Click:Connect(function()
-    gui:Destroy()
+close.MouseButton1Click:Connect(function()
+	main:Destroy()
 end)
 
--- Плавный полёт
-rs.RenderStepped:Connect(function()
-    if flying then
-        local char = plr.Character
-        if char and char:FindFirstChild("HumanoidRootPart") then
-            local move = Vector3.zero
-            if uis:IsKeyDown(Enum.KeyCode.W) then move += cam.CFrame.LookVector end
-            if uis:IsKeyDown(Enum.KeyCode.S) then move -= cam.CFrame.LookVector end
-            if uis:IsKeyDown(Enum.KeyCode.A) then move -= cam.CFrame.RightVector end
-            if uis:IsKeyDown(Enum.KeyCode.D) then move += cam.CFrame.RightVector end
-            char.HumanoidRootPart.Velocity = move * speeds
-        end
-    end
+minimize.MouseButton1Click:Connect(function()
+	for _,v in pairs(Frame:GetChildren()) do
+		if v:IsA("TextButton") or v:IsA("TextLabel") then
+			v.Visible = false
+		end
+	end
+	expand.Visible = true
 end)
 
--- 🚂 Красивый ESP (маленький, неон)
-local function addESP(part)
-    local esp = Instance.new("BillboardGui", part)
-    esp.Size = UDim2.new(0, 60, 0, 20)
-    esp.AlwaysOnTop = true
-    local label = Instance.new("TextLabel", esp)
-    label.Size = UDim2.new(1,0,1,0)
-    label.Text = "🚂"
-    label.BackgroundTransparency = 1
-    label.TextColor3 = Color3.fromRGB(0, 255, 170)
-    label.TextScaled = true
+expand.MouseButton1Click:Connect(function()
+	for _,v in pairs(Frame:GetChildren()) do
+		if v:IsA("TextButton") or v:IsA("TextLabel") then
+			v.Visible = true
+		end
+	end
+	expand.Visible = false
+end)
+
+-- ESP поездов
+for _, train in pairs(workspace:GetDescendants()) do
+	if train:IsA("Model") and train.Name == "Train" then
+		local billboard = Instance.new("BillboardGui", train)
+		billboard.Size = UDim2.new(0,100,0,20)
+		billboard.Adornee = train:FindFirstChild("PrimaryPart") or train:FindFirstChildWhichIsA("BasePart")
+		local text = Instance.new("TextLabel", billboard)
+		text.BackgroundTransparency = 1
+		text.Text = "TRAIN"
+		text.TextColor3 = Color3.fromRGB(0,255,0)
+		text.TextScaled = true
+		text.Font = Enum.Font.SourceSansBold
+	end
 end
-
-for _,v in pairs(workspace:GetDescendants()) do
-    if v:IsA("Model") and v.Name:lower():find("train") then
-        local p = v:FindFirstChildWhichIsA("BasePart")
-        if p then addESP(p) end
-    end
-end
-
-workspace.DescendantAdded:Connect(function(v)
-    if v:IsA("Model") and v.Name:lower():find("train") then
-        local p = v:FindFirstChildWhichIsA("BasePart")
-        if p then addESP(p) end
-    end
-end)
