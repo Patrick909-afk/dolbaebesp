@@ -48,28 +48,35 @@ close.MouseButton1Click:Connect(function()
 end)
 
 RunService.Stepped:Connect(function()
-    if noclipEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+    if noclipEnabled and LocalPlayer.Character then
         for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
-            if part:IsA("BasePart") and part.CanCollide == true then
+            if part:IsA("BasePart") then
                 part.CanCollide = false
             end
+        end
+        -- Лёгкий «парящий эффект», чтобы не падал
+        local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            hrp.Velocity = Vector3.new(0, 2, 0)
         end
     end
 end)
 
 -------------------------
--- ESP поездов
+-- ESP поездов (больше и сверху)
 -------------------------
 local function createESP(obj)
     if obj:FindFirstChild("PatrickESP") then return end
     local bill = Instance.new("BillboardGui", obj)
     bill.Name = "PatrickESP"
-    bill.Size = UDim2.new(0, 50, 0, 20)
+    bill.Size = UDim2.new(0, 80, 0, 40)
     bill.AlwaysOnTop = true
+    bill.StudsOffset = Vector3.new(0, 8, 0)  -- выше модели
     local txt = Instance.new("TextLabel", bill)
     txt.BackgroundTransparency = 1
     txt.Text = "🚂"
     txt.TextColor3 = Color3.fromRGB(0, 255, 0)
+    txt.TextScaled = true
     txt.Size = UDim2.new(1,0,1,0)
 end
 
@@ -86,12 +93,25 @@ Workspace.DescendantAdded:Connect(function(v)
 end)
 
 -------------------------
+-- Бессмертие от мобов (и быстрая подстройка)
+-------------------------
+local humanoid
+RunService.RenderStepped:Connect(function()
+    if LocalPlayer.Character then
+        humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            -- Блокируем урон (если скрипты наносят TakeDamage)
+            humanoid.Health = humanoid.MaxHealth
+        end
+    end
+end)
+
+-------------------------
 -- Бесконечные патроны
 -------------------------
 RunService.RenderStepped:Connect(function()
-    local char = LocalPlayer.Character
-    if char then
-        for _, tool in pairs(char:GetChildren()) do
+    if LocalPlayer.Character then
+        for _, tool in pairs(LocalPlayer.Character:GetChildren()) do
             if tool:IsA("Tool") then
                 for _, v in pairs(tool:GetDescendants()) do
                     if v.Name:lower():find("ammo") or v.Name:lower():find("clip") then
