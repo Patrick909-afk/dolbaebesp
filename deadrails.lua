@@ -1,119 +1,170 @@
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local LocalPlayer = Players.LocalPlayer
+local player = game.Players.LocalPlayer
+local runService = game:GetService("RunService")
+local gui = Instance.new("ScreenGui", player.PlayerGui)
+gui.ResetOnSpawn = false
 
--- GUI
-local main = Instance.new("ScreenGui")
-main.Parent = LocalPlayer:WaitForChild("PlayerGui")
-main.Name = "PatrickCheat"
-main.ResetOnSpawn = false
-
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 200, 0, 100)
-frame.Position = UDim2.new(0.1, 0, 0.4, 0)
-frame.BackgroundColor3 = Color3.fromRGB(0,255,0)
+-- 🌟 Основная рамка
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 220, 0, 220)
+frame.Position = UDim2.new(0.4,0,0.4,0)
+frame.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
 frame.BackgroundTransparency = 0.3
 frame.Active = true
 frame.Draggable = true
-frame.Parent = main
 
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 20)
-title.Text = "☣ Patrick NoClip & ESP"
-title.TextColor3 = Color3.fromRGB(0,255,0)
-title.BackgroundTransparency = 1
-title.Parent = frame
+local stroke = Instance.new("UIStroke", frame)
+stroke.Color = Color3.fromRGB(0,255,0)
+stroke.Thickness = 2
 
-local btnNoClip = Instance.new("TextButton")
-btnNoClip.Size = UDim2.new(1, -10, 0, 25)
-btnNoClip.Position = UDim2.new(0,5,0,25)
-btnNoClip.Text = "Toggle NoClip"
-btnNoClip.BackgroundColor3 = Color3.fromRGB(0,100,0)
-btnNoClip.TextColor3 = Color3.new(1,1,1)
-btnNoClip.Parent = frame
+-- 🌟 Кнопки
+local function createButton(name, text, posY)
+    local btn = Instance.new("TextButton", frame)
+    btn.Name = name
+    btn.Size = UDim2.new(0, 200, 0, 30)
+    btn.Position = UDim2.new(0, 10, 0, posY)
+    btn.Text = text
+    btn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+    btn.TextColor3 = Color3.new(0,0,0)
+    btn.BackgroundTransparency = 0.1
+    return btn
+end
 
-local btnKillAura = Instance.new("TextButton")
-btnKillAura.Size = UDim2.new(1, -10, 0, 25)
-btnKillAura.Position = UDim2.new(0,5,0,55)
-btnKillAura.Text = "Kill Aura"
-btnKillAura.BackgroundColor3 = Color3.fromRGB(0,100,0)
-btnKillAura.TextColor3 = Color3.new(1,1,1)
-btnKillAura.Parent = frame
+local noclipBtn = createButton("NoClipBtn", "NoClip: OFF", 10)
+local espBtn = createButton("ESPBtn", "ESP Trains: OFF", 50)
+local bondFarmBtn = createButton("BondFarmBtn", "Farm Bonds: OFF", 90)
+local killAuraBtn = createButton("KillAuraBtn", "Kill Aura: OFF", 130)
 
-local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0, 20, 0, 20)
-closeBtn.Position = UDim2.new(1, -20, 0, 0)
-closeBtn.Text = "X"
-closeBtn.BackgroundColor3 = Color3.fromRGB(255,0,0)
+local closeBtn = createButton("CloseBtn", "X", 0)
+closeBtn.Size = UDim2.new(0, 30, 0, 20)
+closeBtn.Position = UDim2.new(1, -35, 0, 0)
+closeBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 closeBtn.TextColor3 = Color3.new(1,1,1)
-closeBtn.Parent = frame
 
--- 📦 Logic
+-- Авторство
+local author = Instance.new("TextLabel", frame)
+author.Size = UDim2.new(0, 220, 0, 20)
+author.Position = UDim2.new(0,0,1,-20)
+author.Text = "Автор @gde_patrick | Подпишись @script_patrick"
+author.TextScaled = true
+author.TextColor3 = Color3.new(0,1,0)
+author.BackgroundTransparency = 1
 
--- 🚂 Smart ESP trains
-RunService.RenderStepped:Connect(function()
-    for _,v in pairs(workspace:GetChildren()) do
-        if v:IsA("Model") and not v:FindFirstChild("PatrickESP") then
-            local part = v.PrimaryPart or v:FindFirstChildWhichIsA("BasePart")
-            if part then
-                local size = part.Size
-                local speed = part.AssemblyLinearVelocity.Magnitude
-                if size.Magnitude > 20 and speed > 10 then
-                    local esp = Instance.new("BillboardGui", v)
-                    esp.Name = "PatrickESP"
-                    esp.Adornee = part
-                    esp.Size = UDim2.new(0,120,0,50)
-                    esp.StudsOffset = Vector3.new(0, size.Y+2, 0)
-                    esp.AlwaysOnTop = true
+-- 🔧 Переменные
+local noclipEnabled = false
+local espEnabled = false
+local bondFarmEnabled = false
+local killAuraEnabled = false
+local espLabels = {}
+local collected = 0
 
-                    local text = Instance.new("TextLabel", esp)
-                    text.Size = UDim2.new(1,0,1,0)
-                    text.Text = "🚂 Train"
-                    text.TextColor3 = Color3.fromRGB(0,255,0)
-                    text.BackgroundTransparency = 1
-                    text.TextScaled = true
-                end
+-- 🚪 NoClip
+noclipBtn.MouseButton1Click:Connect(function()
+    noclipEnabled = not noclipEnabled
+    noclipBtn.Text = "NoClip: " .. (noclipEnabled and "ON" or "OFF")
+end)
+
+runService.Stepped:Connect(function()
+    if noclipEnabled and player.Character then
+        for _, part in pairs(player.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
             end
         end
     end
 end)
 
--- 🧱 NoClip
-local noclip = false
-btnNoClip.MouseButton1Click:Connect(function()
-    noclip = not noclip
+-- 🚂 ESP поездов
+espBtn.MouseButton1Click:Connect(function()
+    espEnabled = not espEnabled
+    espBtn.Text = "ESP Trains: " .. (espEnabled and "ON" or "OFF")
+    if not espEnabled then
+        for _, lbl in pairs(espLabels) do lbl:Destroy() end
+        espLabels = {}
+    else
+        spawn(function()
+            while espEnabled do
+                for _, lbl in pairs(espLabels) do lbl:Destroy() end
+                espLabels = {}
+                for _, obj in pairs(workspace:GetDescendants()) do
+                    if obj:IsA("Model") and obj:FindFirstChild("TrainPart") then
+                        local dist = (player.Character.HumanoidRootPart.Position - obj.PrimaryPart.Position).Magnitude
+                        local bb = Instance.new("BillboardGui", obj)
+                        bb.Size = UDim2.new(0,40,0,20)
+                        bb.Adornee = obj.PrimaryPart or obj:FindFirstChild("TrainPart")
+                        bb.AlwaysOnTop = true
+                        bb.MaxDistance = 500
+                        local txt = Instance.new("TextLabel", bb)
+                        txt.Size = UDim2.new(1,0,1,0)
+                        txt.Text = "🚂 "..math.floor(dist).."m"
+                        txt.TextColor3 = Color3.new(0,1,0)
+                        txt.BackgroundTransparency = 1
+                        txt.TextScaled = true
+                        table.insert(espLabels, bb)
+                    end
+                end
+                wait(1)
+            end
+        end)
+    end
 end)
 
-RunService.Stepped:Connect(function()
-    if noclip and LocalPlayer.Character then
-        for _,v in pairs(LocalPlayer.Character:GetDescendants()) do
-            if v:IsA("BasePart") and v.CanCollide then
-                v.CanCollide = false
+-- 🪙 Фарм облигаций
+bondFarmBtn.MouseButton1Click:Connect(function()
+    bondFarmEnabled = not bondFarmEnabled
+    bondFarmBtn.Text = "Farm Bonds: " .. (bondFarmEnabled and "ON" or "OFF")
+    if bondFarmEnabled then
+        local blackScreen = Instance.new("Frame", gui)
+        blackScreen.Size = UDim2.new(1,0,1,0)
+        blackScreen.BackgroundColor3 = Color3.new(0,0,0)
+        blackScreen.BackgroundTransparency = 0
+        local counter = Instance.new("TextLabel", blackScreen)
+        counter.Size = UDim2.new(0,300,0,50)
+        counter.Position = UDim2.new(0.5,-150,0.1,0)
+        counter.TextScaled = true
+        counter.TextColor3 = Color3.new(0,1,0)
+        counter.BackgroundTransparency = 1
+        spawn(function()
+            while bondFarmEnabled do
+                for _, item in pairs(workspace:GetDescendants()) do
+                    if item.Name=="Bond" and item:IsA("BasePart") then
+                        player.Character.HumanoidRootPart.CFrame = item.CFrame
+                        collected = collected+1
+                        counter.Text = "Собрано облигаций: "..collected
+                        wait(0.2)
+                    end
+                end
+                wait(0.5)
             end
-        end
+            blackScreen:Destroy()
+        end)
     end
 end)
 
 -- ⚔️ Kill Aura
-btnKillAura.MouseButton1Click:Connect(function()
-    local char = LocalPlayer.Character
-    if not char then return end
-    local tool = char:FindFirstChildOfClass("Tool")
-    if not tool then return end
-
-    for _,mob in pairs(workspace:GetDescendants()) do
-        if mob:IsA("Model") and mob:FindFirstChildOfClass("Humanoid") and not Players:GetPlayerFromCharacter(mob) then
-            mob:FindFirstChildOfClass("Humanoid").Health = 0
-        end
+killAuraBtn.MouseButton1Click:Connect(function()
+    killAuraEnabled = not killAuraEnabled
+    killAuraBtn.Text = "Kill Aura: " .. (killAuraEnabled and "ON" or "OFF")
+    if killAuraEnabled then
+        spawn(function()
+            while killAuraEnabled do
+                local char = player.Character
+                if char then
+                    local tool = char:FindFirstChildOfClass("Tool")
+                    if tool then
+                        for _, mob in pairs(workspace:GetDescendants()) do
+                            if mob:IsA("Model") and mob:FindFirstChild("Humanoid") and not game.Players:GetPlayerFromCharacter(mob) then
+                                mob.Humanoid.Health = 0
+                            end
+                        end
+                    end
+                end
+                wait(0.5)
+            end
+        end)
     end
 end)
 
--- Закрыть GUI
+-- ❌ Закрыть меню
 closeBtn.MouseButton1Click:Connect(function()
-    main:Destroy()
+    gui:Destroy()
 end)
-
-game:GetService("StarterGui"):SetCore("SendNotification",{
-    Title="Patrick Cheat";
-    Text="Loaded successfully!";
-})
