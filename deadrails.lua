@@ -1,133 +1,174 @@
-local plr = game.Players.LocalPlayer
-local char = plr.Character or plr.CharacterAdded:Wait()
-local hrp = char:WaitForChild("HumanoidRootPart")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
 
--- GUI helper
-local function createMenu(name, ypos)
-    local gui = Instance.new("ScreenGui", plr.PlayerGui)
-    gui.ResetOnSpawn = false
-    local frame = Instance.new("Frame", gui)
-    frame.BackgroundColor3 = Color3.fromRGB(0,255,0)
-    frame.BackgroundTransparency = 0.3
-    frame.BorderSizePixel = 0
-    frame.Size = UDim2.new(0, 200, 0, 60)
-    frame.Position = UDim2.new(0, 100, 0, ypos)
+-- ESP поездов
+local function createTrainESP(train)
+    local billboard = Instance.new("BillboardGui", train)
+    billboard.Size = UDim2.new(0,100,0,40)
+    billboard.AlwaysOnTop = true
+    local text = Instance.new("TextLabel", billboard)
+    text.BackgroundTransparency = 1
+    text.Text = "🚂 Train"
+    text.TextColor3 = Color3.fromRGB(0,255,0)
+    text.TextStrokeTransparency = 0
+    text.TextScaled = true
+end
+for _,v in ipairs(Workspace:GetDescendants()) do
+    if v.Name:lower():find("train") then
+        createTrainESP(v)
+    end
+end
+Workspace.DescendantAdded:Connect(function(v)
+    if v.Name:lower():find("train") then
+        createTrainESP(v)
+    end
+end)
 
-    local title = Instance.new("TextLabel", frame)
-    title.Text = name
-    title.TextColor3 = Color3.fromRGB(0,255,0)
-    title.Font = Enum.Font.SourceSansBold
-    title.TextSize = 18
-    title.Size = UDim2.new(1,0,0,20)
-    title.BackgroundTransparency = 1
+------------------------------------------------------------
+-- Patrick Fly меню
+------------------------------------------------------------
+local flyGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+flyGui.Name = "PatrickFlyGUI"
+local flyFrame = Instance.new("Frame", flyGui)
+flyFrame.Size = UDim2.new(0,200,0,100)
+flyFrame.Position = UDim2.new(0.05,0,0.4,0)
+flyFrame.BackgroundColor3 = Color3.fromRGB(0,255,0)
+flyFrame.Active = true
+flyFrame.Draggable = true
 
-    local toggle = Instance.new("TextButton", frame)
-    toggle.Text = name.." OFF"
-    toggle.TextColor3 = Color3.fromRGB(0,255,0)
-    toggle.Font = Enum.Font.SourceSansBold
-    toggle.TextSize = 16
-    toggle.Size = UDim2.new(0.5,0,0,20)
-    toggle.Position = UDim2.new(0,0,0,20)
-    toggle.BackgroundTransparency = 1
+local flyTitle = Instance.new("TextLabel", flyFrame)
+flyTitle.Text = "Patrick Fly"
+flyTitle.Size = UDim2.new(1,0,0,20)
+flyTitle.BackgroundTransparency = 1
+flyTitle.TextColor3 = Color3.fromRGB(0,255,0)
 
-    local speedLabel = Instance.new("TextLabel", frame)
-    speedLabel.Text = "Speed: 30"
-    speedLabel.TextColor3 = Color3.fromRGB(0,255,0)
-    speedLabel.Font = Enum.Font.SourceSansBold
-    speedLabel.TextSize = 16
-    speedLabel.Size = UDim2.new(0.5,0,0,20)
-    speedLabel.Position = UDim2.new(0.5,0,0,20)
-    speedLabel.BackgroundTransparency = 1
+local flyOn = Instance.new("TextButton", flyFrame)
+flyOn.Text = "Fly: OFF"
+flyOn.Position = UDim2.new(0,0,0,25)
+flyOn.Size = UDim2.new(0.5,0,0,25)
 
-    local plus = Instance.new("TextButton", frame)
-    plus.Text = "+"
-    plus.TextColor3 = Color3.fromRGB(0,255,0)
-    plus.Font = Enum.Font.SourceSansBold
-    plus.TextSize = 18
-    plus.Size = UDim2.new(0.5,0,0,20)
-    plus.Position = UDim2.new(0,0,0,40)
-    plus.BackgroundTransparency = 1
+local plus = Instance.new("TextButton", flyFrame)
+plus.Text = "+"
+plus.Position = UDim2.new(0,0,0,55)
+plus.Size = UDim2.new(0.25,0,0,25)
 
-    local minus = Instance.new("TextButton", frame)
-    minus.Text = "-"
-    minus.TextColor3 = Color3.fromRGB(0,255,0)
-    minus.Font = Enum.Font.SourceSansBold
-    minus.TextSize = 18
-    minus.Size = UDim2.new(0.5,0,0,20)
-    minus.Position = UDim2.new(0.5,0,0,40)
-    minus.BackgroundTransparency = 1
+local minus = Instance.new("TextButton", flyFrame)
+minus.Text = "-"
+minus.Position = UDim2.new(0.25,0,0,55)
+minus.Size = UDim2.new(0.25,0,0,25)
 
-    return {toggle=toggle, speedLabel=speedLabel, plus=plus, minus=minus, frame=frame, gui=gui}
+local speedLabel = Instance.new("TextLabel", flyFrame)
+speedLabel.Text = "Speed: 1"
+speedLabel.Position = UDim2.new(0.5,0,0,55)
+speedLabel.Size = UDim2.new(0.5,0,0,25)
+speedLabel.BackgroundTransparency = 1
+speedLabel.TextColor3 = Color3.fromRGB(0,255,0)
+
+------------------------------------------------------------
+-- Patrick NoClip меню
+------------------------------------------------------------
+local clipGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+clipGui.Name = "PatrickNoClipGUI"
+local clipFrame = Instance.new("Frame", clipGui)
+clipFrame.Size = UDim2.new(0,200,0,100)
+clipFrame.Position = UDim2.new(0.05,0,0.55,0)
+clipFrame.BackgroundColor3 = Color3.fromRGB(0,255,0)
+clipFrame.Active = true
+clipFrame.Draggable = true
+
+local clipTitle = Instance.new("TextLabel", clipFrame)
+clipTitle.Text = "Patrick NoClip"
+clipTitle.Size = UDim2.new(1,0,0,20)
+clipTitle.BackgroundTransparency = 1
+clipTitle.TextColor3 = Color3.fromRGB(0,255,0)
+
+local clipOn = Instance.new("TextButton", clipFrame)
+clipOn.Text = "NoClip: OFF"
+clipOn.Position = UDim2.new(0,0,0,25)
+clipOn.Size = UDim2.new(0.5,0,0,25)
+
+local cplus = Instance.new("TextButton", clipFrame)
+cplus.Text = "+"
+cplus.Position = UDim2.new(0,0,0,55)
+cplus.Size = UDim2.new(0.25,0,0,25)
+
+local cminus = Instance.new("TextButton", clipFrame)
+cminus.Text = "-"
+cminus.Position = UDim2.new(0.25,0,0,0,55)
+cminus.Size = UDim2.new(0.25,0,0,25)
+
+local cspeedLabel = Instance.new("TextLabel", clipFrame)
+cspeedLabel.Text = "Speed: 1"
+cspeedLabel.Position = UDim2.new(0.5,0,0,55)
+cspeedLabel.Size = UDim2.new(0.5,0,0,25)
+cspeedLabel.BackgroundTransparency = 1
+cspeedLabel.TextColor3 = Color3.fromRGB(0,255,0)
+
+------------------------------------------------------------
+-- Fly логика
+------------------------------------------------------------
+local flySpeed = 1
+local flying = false
+local flyBV, flyBG
+
+local function startFly()
+    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local root = character:WaitForChild("HumanoidRootPart")
+    flyBV = Instance.new("BodyVelocity", root)
+    flyBV.Velocity = Vector3.zero
+    flyBV.MaxForce = Vector3.new(9e9,9e9,9e9)
+    flyBG = Instance.new("BodyGyro", root)
+    flyBG.CFrame = Workspace.CurrentCamera.CFrame
+    flyBG.MaxTorque = Vector3.new(9e9,9e9,9e9)
+    RunService.RenderStepped:Connect(function()
+        if flying then
+            flyBV.Velocity = Workspace.CurrentCamera.CFrame.LookVector * flySpeed*5
+            flyBG.CFrame = Workspace.CurrentCamera.CFrame
+        end
+    end)
 end
 
--- Fly
-local flyUI = createMenu("Patrick Fly", 300)
-local flying = false
-local flySpeed = 30
-
-flyUI.toggle.MouseButton1Click:Connect(function()
+flyOn.MouseButton1Click:Connect(function()
     flying = not flying
-    flyUI.toggle.Text = "Patrick Fly "..(flying and "ON" or "OFF")
-
-    if flying then
-        local bv = Instance.new("BodyVelocity", hrp)
-        local bg = Instance.new("BodyGyro", hrp)
-        bv.MaxForce = Vector3.new(9e9,9e9,9e9)
-        bg.MaxTorque = Vector3.new(9e9,9e9,9e9)
-        while flying do
-            bv.Velocity = workspace.CurrentCamera.CFrame.LookVector * flySpeed
-            bg.CFrame = workspace.CurrentCamera.CFrame
-            task.wait()
-        end
-        bv:Destroy()
-        bg:Destroy()
+    flyOn.Text = "Fly: "..(flying and "ON" or "OFF")
+    if flying then startFly() else
+        if flyBV then flyBV:Destroy() end
+        if flyBG then flyBG:Destroy() end
     end
 end)
-
-flyUI.plus.MouseButton1Click:Connect(function()
-    flySpeed = flySpeed + 5
-    flyUI.speedLabel.Text = "Speed: "..flySpeed
+plus.MouseButton1Click:Connect(function()
+    flySpeed = flySpeed + 1
+    speedLabel.Text = "Speed: "..flySpeed
 end)
-flyUI.minus.MouseButton1Click:Connect(function()
-    flySpeed = math.max(5, flySpeed - 5)
-    flyUI.speedLabel.Text = "Speed: "..flySpeed
+minus.MouseButton1Click:Connect(function()
+    flySpeed = math.max(1, flySpeed - 1)
+    speedLabel.Text = "Speed: "..flySpeed
 end)
 
--- NoClip
-local noclipUI = createMenu("Patrick NoClip", 370)
+------------------------------------------------------------
+-- NoClip логика
+------------------------------------------------------------
+local clipSpeed = 1
 local noclipping = false
-local noclipSpeed = 30
 
-noclipUI.toggle.MouseButton1Click:Connect(function()
+clipOn.MouseButton1Click:Connect(function()
     noclipping = not noclipping
-    noclipUI.toggle.Text = "Patrick NoClip "..(noclipping and "ON" or "OFF")
-
-    if noclipping then
-        while noclipping do
-            for _,v in pairs(char:GetDescendants()) do
-                if v:IsA("BasePart") and v.CanCollide == true then
-                    v.CanCollide = false
-                end
-            end
-            -- двигаться вперёд при нажатии
-            hrp.Velocity = workspace.CurrentCamera.CFrame.LookVector * noclipSpeed
-            task.wait()
-        end
-    else
-        -- вернуть коллизии
-        for _,v in pairs(char:GetDescendants()) do
-            if v:IsA("BasePart") then
-                v.CanCollide = true
+    clipOn.Text = "NoClip: "..(noclipping and "ON" or "OFF")
+    RunService.Stepped:Connect(function()
+        if noclipping then
+            for _,v in pairs(LocalPlayer.Character:GetDescendants()) do
+                if v:IsA("BasePart") then v.CanCollide = false end
             end
         end
-    end
+    end)
 end)
-
-noclipUI.plus.MouseButton1Click:Connect(function()
-    noclipSpeed = noclipSpeed + 5
-    noclipUI.speedLabel.Text = "Speed: "..noclipSpeed
+cplus.MouseButton1Click:Connect(function()
+    clipSpeed = clipSpeed + 1
+    cspeedLabel.Text = "Speed: "..clipSpeed
 end)
-noclipUI.minus.MouseButton1Click:Connect(function()
-    noclipSpeed = math.max(5, noclipSpeed - 5)
-    noclipUI.speedLabel.Text = "Speed: "..noclipSpeed
+cminus.MouseButton1Click:Connect(function()
+    clipSpeed = math.max(1, clipSpeed - 1)
+    cspeedLabel.Text = "Speed: "..clipSpeed
 end)
