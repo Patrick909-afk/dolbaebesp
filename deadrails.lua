@@ -1,6 +1,5 @@
 local player = game.Players.LocalPlayer
 local runService = game:GetService("RunService")
-local uis = game:GetService("UserInputService")
 local gui = Instance.new("ScreenGui", player.PlayerGui)
 gui.ResetOnSpawn = false
 
@@ -19,7 +18,7 @@ local frame = Instance.new("Frame", gui)
 frame.Size = UDim2.new(0, 250, 0, 250)
 frame.Position = UDim2.new(0.4,0,0.4,0)
 frame.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-frame.BackgroundTransparency = 0.3
+frame.BackgroundTransparency = 0.2
 frame.Active = true
 frame.Draggable = true
 
@@ -27,7 +26,7 @@ local stroke = Instance.new("UIStroke", frame)
 stroke.Color = Color3.fromRGB(0,255,0)
 stroke.Thickness = 2
 
--- 🌟 Сворачивание и закрытие
+-- 🌟 Кнопки свернуть и закрыть
 local closeBtn = Instance.new("TextButton", frame)
 closeBtn.Size = UDim2.new(0, 30, 0, 20)
 closeBtn.Position = UDim2.new(1, -35, 0, 0)
@@ -51,7 +50,7 @@ minimizeBtn.MouseButton1Click:Connect(function()
 end)
 closeBtn.MouseButton1Click:Connect(function() gui:Destroy() end)
 
--- 🌟 Кнопка для создания подменю
+-- 🌟 Создание кнопок
 local function createButton(name, text, posY)
     local btn = Instance.new("TextButton", frame)
     btn.Name = name
@@ -67,13 +66,14 @@ end
 -- 🌟 Переменные
 local noclipEnabled = false
 local speedhackEnabled = false
-local flyEnabled = false
-local autoCloseEnabled = false
-local autoAttackEnabled = false
-local flySpeed = 2
 local speedValue = 2
+local flyEnabled = false
+local flySpeed = 2
+local autoAttackEnabled = false
+local closeBaseEnabled = false
+local baseSavedPos = nil
 
--- 🌟 NoClip с обходом античита
+-- 🌟 NoClip с обходом
 local noclipBtn = createButton("NoClipBtn","NoClip: OFF",40)
 noclipBtn.MouseButton1Click:Connect(function()
     noclipEnabled = not noclipEnabled
@@ -87,14 +87,16 @@ runService.Stepped:Connect(function()
     end
 end)
 
--- 🌟 SpeedHack подменю
+-- 🌟 SpeedHack
 local speedBtn = createButton("SpeedBtn","SpeedHack",80)
 speedBtn.MouseButton1Click:Connect(function()
     local speedMenu = Instance.new("Frame", gui)
-    speedMenu.Size = UDim2.new(0, 200, 0, 120)
+    speedMenu.Size = UDim2.new(0,200,0,120)
     speedMenu.Position = UDim2.new(0.6,0,0.4,0)
     speedMenu.BackgroundColor3 = Color3.fromRGB(0,255,0)
-    local onOff = createButton("SpeedOnOff","ON/OFF",10)
+    speedMenu.Active = true
+    speedMenu.Draggable = true
+    local onOff = createButton("OnOff","ON/OFF",10)
     onOff.Parent = speedMenu
     onOff.Size=UDim2.new(1,0,0,30)
     local plus = createButton("Plus","+",50)
@@ -104,7 +106,7 @@ speedBtn.MouseButton1Click:Connect(function()
     minus.Parent = speedMenu
     minus.Position=UDim2.new(0.5,0,0,50)
     minus.Size=UDim2.new(0.5,0,0,30)
-    local x = createButton("X","X",90)
+    local x = createButton("Close","X",90)
     x.Parent=speedMenu
     x.Size=UDim2.new(1,0,0,30)
     onOff.MouseButton1Click:Connect(function()
@@ -115,9 +117,9 @@ speedBtn.MouseButton1Click:Connect(function()
     minus.MouseButton1Click:Connect(function() speedValue=math.max(1,speedValue-1) end)
     x.MouseButton1Click:Connect(function() speedMenu:Destroy() end)
 end)
-runService.Stepped:Connect(function()
+runService.RenderStepped:Connect(function()
     if speedhackEnabled and player.Character and player.Character:FindFirstChild("Humanoid") then
-        player.Character.Humanoid.WalkSpeed = speedValue
+        player.Character.Humanoid.WalkSpeed = speedValue*16
     else
         if player.Character and player.Character:FindFirstChild("Humanoid") then
             player.Character.Humanoid.WalkSpeed = 16
@@ -125,14 +127,16 @@ runService.Stepped:Connect(function()
     end
 end)
 
--- 🌟 Fly подменю
+-- 🌟 Fly
 local flyBtn = createButton("FlyBtn","Fly",120)
 flyBtn.MouseButton1Click:Connect(function()
     local flyMenu = Instance.new("Frame", gui)
-    flyMenu.Size = UDim2.new(0, 200, 0, 120)
+    flyMenu.Size = UDim2.new(0,200,0,120)
     flyMenu.Position = UDim2.new(0.6,0,0.6,0)
     flyMenu.BackgroundColor3 = Color3.fromRGB(0,255,0)
-    local onOff = createButton("FlyOnOff","ON/OFF",10)
+    flyMenu.Active = true
+    flyMenu.Draggable = true
+    local onOff = createButton("OnOff","ON/OFF",10)
     onOff.Parent=flyMenu
     onOff.Size=UDim2.new(1,0,0,30)
     local up = createButton("Up","UP",50)
@@ -142,7 +146,7 @@ flyBtn.MouseButton1Click:Connect(function()
     down.Parent=flyMenu
     down.Position=UDim2.new(0.5,0,0,50)
     down.Size=UDim2.new(0.5,0,0,30)
-    local x = createButton("X","X",90)
+    local x = createButton("Close","X",90)
     x.Parent=flyMenu
     x.Size=UDim2.new(1,0,0,30)
     onOff.MouseButton1Click:Connect(function()
@@ -160,7 +164,7 @@ runService.RenderStepped:Connect(function()
     end
 end)
 
--- 🌟 AutoAttack
+-- 🌟 AutoAttack с увеличением хитбоксов
 local atkBtn = createButton("AtkBtn","AutoAttack: OFF",160)
 atkBtn.MouseButton1Click:Connect(function()
     autoAttackEnabled=not autoAttackEnabled
@@ -168,6 +172,13 @@ atkBtn.MouseButton1Click:Connect(function()
     if autoAttackEnabled then
         spawn(function()
             while autoAttackEnabled do
+                for _,pl in pairs(game.Players:GetPlayers()) do
+                    if pl~=player and pl.Character then
+                        for _,part in pairs(pl.Character:GetChildren()) do
+                            if part:IsA("BasePart") then part.Size=Vector3.new(10,10,10) end
+                        end
+                    end
+                end
                 local tool=player.Character and player.Character:FindFirstChildOfClass("Tool")
                 if tool then tool:Activate() end
                 wait(0.1)
@@ -176,24 +187,21 @@ atkBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 🌟 AutoCloseBase
-local acbBtn = createButton("ACBBtn","AutoCloseBase: OFF",200)
+-- 🌟 Закрыть базу
+local acbBtn = createButton("ACBBtn","Закрыть базу: OFF",200)
 acbBtn.MouseButton1Click:Connect(function()
-    autoCloseEnabled=not autoCloseEnabled
-    acbBtn.Text="AutoCloseBase: "..(autoCloseEnabled and "ON" or "OFF")
-    if autoCloseEnabled then
-        local basePos = player.Character and player.Character.HumanoidRootPart.Position
+    closeBaseEnabled=not closeBaseEnabled
+    acbBtn.Text="Закрыть базу: "..(closeBaseEnabled and "ON" or "OFF")
+    if closeBaseEnabled and not baseSavedPos then
+        baseSavedPos = player.Character and player.Character.HumanoidRootPart.Position
+    end
+    if closeBaseEnabled then
         spawn(function()
-            while autoCloseEnabled do
-                for _,obj in pairs(workspace:GetDescendants()) do
-                    if obj:IsA("TextLabel") and tonumber(obj.Text)==4 then
-                        player.Character.Humanoid.WalkSpeed=100
-                        player.Character.HumanoidRootPart.CFrame=CFrame.new(basePos)
-                        wait(0.2)
-                        player.Character.Humanoid.WalkSpeed=16
-                    end
+            while closeBaseEnabled do
+                if baseSavedPos then
+                    player.Character.HumanoidRootPart.CFrame=CFrame.new(baseSavedPos)
                 end
-                wait(1)
+                wait(0.2)
             end
         end)
     end
