@@ -1,174 +1,171 @@
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
-local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
 
--- ESP поездов
+------------------------------------------------------------
+-- ESP поездов (маленький, зелёный)
+------------------------------------------------------------
 local function createTrainESP(train)
-    local billboard = Instance.new("BillboardGui", train)
-    billboard.Size = UDim2.new(0,100,0,40)
+    if train:FindFirstChild("ESP") then return end
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "ESP"
+    billboard.Size = UDim2.new(0,50,0,20)
     billboard.AlwaysOnTop = true
+    billboard.Adornee = train
+    billboard.Parent = train
     local text = Instance.new("TextLabel", billboard)
     text.BackgroundTransparency = 1
-    text.Text = "🚂 Train"
+    text.Text = "🚂"
     text.TextColor3 = Color3.fromRGB(0,255,0)
-    text.TextStrokeTransparency = 0
     text.TextScaled = true
+    text.Font = Enum.Font.SourceSansBold
 end
-for _,v in ipairs(Workspace:GetDescendants()) do
-    if v.Name:lower():find("train") then
-        createTrainESP(v)
-    end
-end
-Workspace.DescendantAdded:Connect(function(v)
-    if v.Name:lower():find("train") then
-        createTrainESP(v)
-    end
-end)
 
-------------------------------------------------------------
--- Patrick Fly меню
-------------------------------------------------------------
-local flyGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
-flyGui.Name = "PatrickFlyGUI"
-local flyFrame = Instance.new("Frame", flyGui)
-flyFrame.Size = UDim2.new(0,200,0,100)
-flyFrame.Position = UDim2.new(0.05,0,0.4,0)
-flyFrame.BackgroundColor3 = Color3.fromRGB(0,255,0)
-flyFrame.Active = true
-flyFrame.Draggable = true
-
-local flyTitle = Instance.new("TextLabel", flyFrame)
-flyTitle.Text = "Patrick Fly"
-flyTitle.Size = UDim2.new(1,0,0,20)
-flyTitle.BackgroundTransparency = 1
-flyTitle.TextColor3 = Color3.fromRGB(0,255,0)
-
-local flyOn = Instance.new("TextButton", flyFrame)
-flyOn.Text = "Fly: OFF"
-flyOn.Position = UDim2.new(0,0,0,25)
-flyOn.Size = UDim2.new(0.5,0,0,25)
-
-local plus = Instance.new("TextButton", flyFrame)
-plus.Text = "+"
-plus.Position = UDim2.new(0,0,0,55)
-plus.Size = UDim2.new(0.25,0,0,25)
-
-local minus = Instance.new("TextButton", flyFrame)
-minus.Text = "-"
-minus.Position = UDim2.new(0.25,0,0,55)
-minus.Size = UDim2.new(0.25,0,0,25)
-
-local speedLabel = Instance.new("TextLabel", flyFrame)
-speedLabel.Text = "Speed: 1"
-speedLabel.Position = UDim2.new(0.5,0,0,55)
-speedLabel.Size = UDim2.new(0.5,0,0,25)
-speedLabel.BackgroundTransparency = 1
-speedLabel.TextColor3 = Color3.fromRGB(0,255,0)
-
-------------------------------------------------------------
--- Patrick NoClip меню
-------------------------------------------------------------
-local clipGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
-clipGui.Name = "PatrickNoClipGUI"
-local clipFrame = Instance.new("Frame", clipGui)
-clipFrame.Size = UDim2.new(0,200,0,100)
-clipFrame.Position = UDim2.new(0.05,0,0.55,0)
-clipFrame.BackgroundColor3 = Color3.fromRGB(0,255,0)
-clipFrame.Active = true
-clipFrame.Draggable = true
-
-local clipTitle = Instance.new("TextLabel", clipFrame)
-clipTitle.Text = "Patrick NoClip"
-clipTitle.Size = UDim2.new(1,0,0,20)
-clipTitle.BackgroundTransparency = 1
-clipTitle.TextColor3 = Color3.fromRGB(0,255,0)
-
-local clipOn = Instance.new("TextButton", clipFrame)
-clipOn.Text = "NoClip: OFF"
-clipOn.Position = UDim2.new(0,0,0,25)
-clipOn.Size = UDim2.new(0.5,0,0,25)
-
-local cplus = Instance.new("TextButton", clipFrame)
-cplus.Text = "+"
-cplus.Position = UDim2.new(0,0,0,55)
-cplus.Size = UDim2.new(0.25,0,0,25)
-
-local cminus = Instance.new("TextButton", clipFrame)
-cminus.Text = "-"
-cminus.Position = UDim2.new(0.25,0,0,0,55)
-cminus.Size = UDim2.new(0.25,0,0,25)
-
-local cspeedLabel = Instance.new("TextLabel", clipFrame)
-cspeedLabel.Text = "Speed: 1"
-cspeedLabel.Position = UDim2.new(0.5,0,0,55)
-cspeedLabel.Size = UDim2.new(0.5,0,0,25)
-cspeedLabel.BackgroundTransparency = 1
-cspeedLabel.TextColor3 = Color3.fromRGB(0,255,0)
-
-------------------------------------------------------------
--- Fly логика
-------------------------------------------------------------
-local flySpeed = 1
-local flying = false
-local flyBV, flyBG
-
-local function startFly()
-    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-    local root = character:WaitForChild("HumanoidRootPart")
-    flyBV = Instance.new("BodyVelocity", root)
-    flyBV.Velocity = Vector3.zero
-    flyBV.MaxForce = Vector3.new(9e9,9e9,9e9)
-    flyBG = Instance.new("BodyGyro", root)
-    flyBG.CFrame = Workspace.CurrentCamera.CFrame
-    flyBG.MaxTorque = Vector3.new(9e9,9e9,9e9)
-    RunService.RenderStepped:Connect(function()
-        if flying then
-            flyBV.Velocity = Workspace.CurrentCamera.CFrame.LookVector * flySpeed*5
-            flyBG.CFrame = Workspace.CurrentCamera.CFrame
+local function scanForTrains()
+    for _,v in ipairs(Workspace:GetDescendants()) do
+        if v:IsA("BasePart") and (v.Name:lower():find("train") or v.Parent.Name:lower():find("train")) then
+            createTrainESP(v)
         end
-    end)
+    end
 end
 
-flyOn.MouseButton1Click:Connect(function()
-    flying = not flying
-    flyOn.Text = "Fly: "..(flying and "ON" or "OFF")
-    if flying then startFly() else
-        if flyBV then flyBV:Destroy() end
-        if flyBG then flyBG:Destroy() end
+scanForTrains()
+Workspace.DescendantAdded:Connect(function(v)
+    if v:IsA("BasePart") and (v.Name:lower():find("train") or v.Parent.Name:lower():find("train")) then
+        createTrainESP(v)
     end
 end)
+
+------------------------------------------------------------
+-- Patrick NoClip GUI
+------------------------------------------------------------
+local screen = Instance.new("ScreenGui", LocalPlayer.PlayerGui)
+screen.Name = "PatrickNoClip"
+screen.ResetOnSpawn = false
+
+local frame = Instance.new("Frame", screen)
+frame.Size = UDim2.new(0,200,0,80)
+frame.Position = UDim2.new(0.05,0,0.4,0)
+frame.BackgroundColor3 = Color3.fromRGB(0,255,0)
+frame.Active = true
+frame.Draggable = true
+
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1,0,0,20)
+title.Text = "Patrick NoClip"
+title.BackgroundTransparency = 1
+title.TextColor3 = Color3.fromRGB(0,0,0)
+
+local toggle = Instance.new("TextButton", frame)
+toggle.Size = UDim2.new(0.4,0,0,30)
+toggle.Position = UDim2.new(0,5,0,25)
+toggle.Text = "OFF"
+toggle.BackgroundColor3 = Color3.fromRGB(50,200,50)
+toggle.TextColor3 = Color3.new(0,0,0)
+
+local close = Instance.new("TextButton", frame)
+close.Size = UDim2.new(0.1,0,0,20)
+close.Position = UDim2.new(0.9,0,0,0)
+close.Text = "X"
+close.TextColor3 = Color3.new(1,0,0)
+
+local speedText = Instance.new("TextLabel", frame)
+speedText.Size = UDim2.new(0.3,0,0,30)
+speedText.Position = UDim2.new(0.45,0,0,25)
+speedText.Text = "Speed: 2"
+speedText.BackgroundTransparency = 1
+speedText.TextColor3 = Color3.new(0,0,0)
+
+local plus = Instance.new("TextButton", frame)
+plus.Size = UDim2.new(0.1,0,0,30)
+plus.Position = UDim2.new(0.8,0,0,25)
+plus.Text = "+"
+plus.TextColor3 = Color3.new(0,0,0)
+
+local minus = Instance.new("TextButton", frame)
+minus.Size = UDim2.new(0.1,0,0,30)
+minus.Position = UDim2.new(0.7,0,0,25)
+minus.Text = "-"
+minus.TextColor3 = Color3.new(0,0,0)
+
+local speed = 2
+local enabled = false
+
+toggle.MouseButton1Click:Connect(function()
+    enabled = not enabled
+    toggle.Text = enabled and "ON" or "OFF"
+end)
+
 plus.MouseButton1Click:Connect(function()
-    flySpeed = flySpeed + 1
-    speedLabel.Text = "Speed: "..flySpeed
+    speed = speed + 1
+    speedText.Text = "Speed: "..speed
 end)
+
 minus.MouseButton1Click:Connect(function()
-    flySpeed = math.max(1, flySpeed - 1)
-    speedLabel.Text = "Speed: "..flySpeed
+    if speed>1 then speed=speed-1 end
+    speedText.Text = "Speed: "..speed
 end)
 
-------------------------------------------------------------
--- NoClip логика
-------------------------------------------------------------
-local clipSpeed = 1
-local noclipping = false
+close.MouseButton1Click:Connect(function()
+    screen:Destroy()
+end)
 
-clipOn.MouseButton1Click:Connect(function()
-    noclipping = not noclipping
-    clipOn.Text = "NoClip: "..(noclipping and "ON" or "OFF")
-    RunService.Stepped:Connect(function()
-        if noclipping then
-            for _,v in pairs(LocalPlayer.Character:GetDescendants()) do
-                if v:IsA("BasePart") then v.CanCollide = false end
+-- NoClip logic
+RunService.Stepped:Connect(function()
+    if enabled then
+        for _,v in pairs(LocalPlayer.Character:GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.CanCollide = false
             end
         end
-    end)
+        LocalPlayer.Character.Humanoid:Move(Vector3.new(0,0,0),false)
+        LocalPlayer.Character.Humanoid.WalkSpeed = speed*10
+    else
+        LocalPlayer.Character.Humanoid.WalkSpeed = 16
+    end
 end)
-cplus.MouseButton1Click:Connect(function()
-    clipSpeed = clipSpeed + 1
-    cspeedLabel.Text = "Speed: "..clipSpeed
-end)
-cminus.MouseButton1Click:Connect(function()
-    clipSpeed = math.max(1, clipSpeed - 1)
-    cspeedLabel.Text = "Speed: "..clipSpeed
+
+------------------------------------------------------------
+-- Бесконечные патроны и без перезарядки
+------------------------------------------------------------
+local function infiniteAmmo()
+    while true do wait(1)
+        for _,tool in ipairs(LocalPlayer.Backpack:GetChildren()) do
+            if tool:FindFirstChild("Ammo") then tool.Ammo.Value=9999 end
+            if tool:FindFirstChild("Clip") then tool.Clip.Value=9999 end
+        end
+        local char = LocalPlayer.Character
+        if char then
+            for _,tool in ipairs(char:GetChildren()) do
+                if tool:FindFirstChild("Ammo") then tool.Ammo.Value=9999 end
+                if tool:FindFirstChild("Clip") then tool.Clip.Value=9999 end
+            end
+        end
+    end
+end
+spawn(infiniteAmmo)
+
+------------------------------------------------------------
+-- «Дюп» попытка (просто телепорт и detach, реальный дюп сервер проверяет)
+------------------------------------------------------------
+local function fakeDupe()
+    local item = LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
+    if item then
+        item.Parent = Workspace
+        item.Handle.Position = LocalPlayer.Character.HumanoidRootPart.Position + Vector3.new(0,5,0)
+        item.Parent = LocalPlayer.Backpack
+    end
+end
+-- fakeDupe() вызови если хочешь попробовать
+
+------------------------------------------------------------
+-- Локальное бессмертие
+------------------------------------------------------------
+spawn(function()
+    while true do wait(1)
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid.Health = LocalPlayer.Character.Humanoid.MaxHealth
+        end
+    end
 end)
