@@ -1,94 +1,81 @@
-local player = game.Players.LocalPlayer
-local char = player.Character or player.CharacterAdded:Wait()
-local hum = char:WaitForChild("Humanoid")
+local plr = game.Players.LocalPlayer
+local char = plr.Character or plr.CharacterAdded:Wait()
 
--- Создание GUI
-local gui = Instance.new("ScreenGui", player.PlayerGui)
-gui.Name = "PatrickNoClip"
+-- GUI
+local gui = Instance.new("ScreenGui", plr.PlayerGui)
+gui.Name = "PatrickMenu"
 gui.ResetOnSpawn = false
 
 local frame = Instance.new("Frame", gui)
 frame.Size = UDim2.new(0, 200, 0, 100)
-frame.Position = UDim2.new(0.4,0,0.4,0)
-frame.BackgroundColor3 = Color3.fromRGB(0,255,0)
-frame.BackgroundTransparency = 0.2
+frame.Position = UDim2.new(0.05, 0, 0.4, 0)
+frame.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
 frame.Active = true
 frame.Draggable = true
 
-local noclipBtn = Instance.new("TextButton", frame)
-noclipBtn.Text = "Toggle NoClip"
-noclipBtn.Size = UDim2.new(1,0,0,30)
-noclipBtn.Position = UDim2.new(0,0,0,0)
-noclipBtn.BackgroundColor3 = Color3.fromRGB(0,200,0)
-
 local killAuraBtn = Instance.new("TextButton", frame)
-killAuraBtn.Text = "KillAura"
-killAuraBtn.Size = UDim2.new(1,0,0,30)
-killAuraBtn.Position = UDim2.new(0,0,0,35)
-killAuraBtn.BackgroundColor3 = Color3.fromRGB(0,200,0)
+killAuraBtn.Size = UDim2.new(1, 0, 0, 30)
+killAuraBtn.Text = "Kill Aura (Mobs only)"
 
-local closeBtn = Instance.new("TextButton", frame)
-closeBtn.Text = "X"
-closeBtn.Size = UDim2.new(0,30,0,30)
-closeBtn.Position = UDim2.new(1,-30,0,0)
-closeBtn.BackgroundColor3 = Color3.fromRGB(200,0,0)
+local noClipBtn = Instance.new("TextButton", frame)
+noClipBtn.Position = UDim2.new(0,0,0,35)
+noClipBtn.Size = UDim2.new(1,0,0,30)
+noClipBtn.Text = "Toggle NoClip"
 
--- NoClip логика
+-- ✅ Kill Aura
+killAuraBtn.MouseButton1Click:Connect(function()
+    local mobsKilled = 0
+    for _, model in pairs(workspace:GetDescendants()) do
+        local hum = model:FindFirstChildWhichIsA("Humanoid")
+        if hum and hum.Health > 0 then
+            local isPlayer = game.Players:GetPlayerFromCharacter(model)
+            if not isPlayer then
+                hum.Health = 0
+                mobsKilled = mobsKilled + 1
+            end
+        end
+    end
+    print("Killed "..mobsKilled.." mobs")
+end)
+
+-- ✅ NoClip
 local noclip = false
-noclipBtn.MouseButton1Click:Connect(function()
+noClipBtn.MouseButton1Click:Connect(function()
     noclip = not noclip
 end)
 
 game:GetService("RunService").Stepped:Connect(function()
-    if noclip and char and hum and hum.Health > 0 then
-        for _, part in pairs(char:GetDescendants()) do
-            if part:IsA("BasePart") and part.CanCollide then
+    if noclip and plr.Character then
+        for _, part in pairs(plr.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
                 part.CanCollide = false
             end
         end
-        char:Move(Vector3.new(0,0,0), true) -- фиксим падение
     end
 end)
 
--- ESP поездов
+-- ✅ ESP поездов
 local function createESP(part)
     local billboard = Instance.new("BillboardGui", part)
-    billboard.Size = UDim2.new(0,50,0,50)
+    billboard.Size = UDim2.new(0,50,0,20)
+    billboard.Adornee = part
     billboard.AlwaysOnTop = true
-    local img = Instance.new("ImageLabel", billboard)
-    img.Image = "rbxassetid://12812846838" -- иконка поезда или свою подставь
-    img.Size = UDim2.new(1,0,1,0)
-    img.BackgroundTransparency = 1
-    return billboard
+    local label = Instance.new("TextLabel", billboard)
+    label.Text = "🚂"
+    label.Size = UDim2.new(1,0,1,0)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.fromRGB(0,255,0)
+    label.TextScaled = true
 end
 
 for _, obj in pairs(workspace:GetDescendants()) do
-    if obj:IsA("Model") and obj.Name:lower():find("train") then
-        createESP(obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart"))
+    if obj:IsA("BasePart") and (string.find(obj.Name:lower(), "train") or string.find(obj.Parent.Name:lower(), "train")) then
+        createESP(obj)
     end
 end
 
 workspace.DescendantAdded:Connect(function(obj)
-    if obj:IsA("Model") and obj.Name:lower():find("train") then
-        wait(0.5)
-        createESP(obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart"))
+    if obj:IsA("BasePart") and (string.find(obj.Name:lower(), "train") or string.find(obj.Parent.Name:lower(), "train")) then
+        createESP(obj)
     end
-end)
-
--- Килл-аура логика
-killAuraBtn.MouseButton1Click:Connect(function()
-    local range = 25 -- радиус действия ауры
-    for _, npc in pairs(workspace:GetDescendants()) do
-        if npc:IsA("Model") and npc:FindFirstChildOfClass("Humanoid") then
-            local hrp = npc:FindFirstChild("HumanoidRootPart")
-            if hrp and (hrp.Position - char.PrimaryPart.Position).Magnitude < range then
-                npc.Humanoid.Health = 0
-            end
-        end
-    end
-end)
-
--- Закрытие
-closeBtn.MouseButton1Click:Connect(function()
-    gui:Destroy()
 end)
