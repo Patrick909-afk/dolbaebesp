@@ -1,5 +1,4 @@
 -- by @gde_patrick
-
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
@@ -10,7 +9,7 @@ local flingPart = nil
 local flingEnabled = false
 local flingPower = 5000
 
--- создаём CollisionGroup
+-- Collision group чтобы шар не сталкивался с игроком
 pcall(function()
     PhysicsService:CreateCollisionGroup("NoPlayerCollision")
     PhysicsService:CollisionGroupSetCollidable("NoPlayerCollision", "Default", false)
@@ -73,25 +72,48 @@ slider.TextColor3 = Color3.new(1,1,1)
 slider.TextSize = 14
 slider.Font = Enum.Font.Gotham
 
--- fling
+-- Функция создания fling с эффектами
 local function startFling()
     stopFling()
     flingPart = Instance.new("Part", workspace)
     flingPart.Shape = Enum.PartType.Ball
     flingPart.Size = Vector3.new(8,8,8)
-    flingPart.Transparency = 0.3
+    flingPart.Transparency = 0.2
     flingPart.Color = Color3.fromRGB(255,50,50)
     flingPart.Anchored = false
     flingPart.CanCollide = true
     flingPart.Massless = true
     flingPart.Name = "PatrickFlingBall"
 
-    -- collision
     pcall(function()
         PhysicsService:SetPartCollisionGroup(flingPart, "NoPlayerCollision")
     end)
 
-    -- weld к персонажу
+    -- эффекты
+    local light = Instance.new("PointLight", flingPart)
+    light.Color = flingPart.Color
+    light.Brightness = 3
+    light.Range = 15
+
+    local trail = Instance.new("Trail", flingPart)
+    trail.Attachment0 = Instance.new("Attachment", flingPart)
+    trail.Attachment1 = Instance.new("Attachment", flingPart)
+    trail.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.new(1,0,0)),
+        ColorSequenceKeypoint.new(1, Color3.new(1,1,0))
+    }
+    trail.Lifetime = 0.2
+    trail.Transparency = NumberSequence.new(0.2,1)
+
+    local particle = Instance.new("ParticleEmitter", flingPart)
+    particle.Texture = "rbxassetid://243660364" -- огонь
+    particle.Rate = 20
+    particle.Lifetime = NumberRange.new(0.2)
+    particle.Speed = NumberRange.new(0,0)
+    particle.Size = NumberSequence.new(0.5)
+    particle.LightEmission = 0.7
+
+    -- weld к игроку
     local att0 = Instance.new("Attachment", LocalPlayer.Character:WaitForChild("HumanoidRootPart"))
     local att1 = Instance.new("Attachment", flingPart)
 
@@ -102,30 +124,30 @@ local function startFling()
     align.MaxForce = math.huge
     align.Responsiveness = 200
 
-    -- кручение
+    -- вращение
     local gyro = Instance.new("BodyAngularVelocity", flingPart)
     gyro.AngularVelocity = Vector3.new(0, flingPower, 0)
     gyro.MaxTorque = Vector3.new(1e9,1e9,1e9)
 
-    -- анимация цвета
+    -- плавная смена цвета
     coroutine.wrap(function()
         while flingEnabled and flingPart do
+            local newColor = Color3.fromRGB(math.random(100,255), math.random(50,255), math.random(50,255))
             local tween = TweenService:Create(flingPart, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
-                {Color = Color3.fromRGB(255, math.random(50,200), math.random(50,200))})
+                {Color = newColor})
             tween:Play()
             tween.Completed:Wait()
+            light.Color = newColor
         end
     end)()
 end
 
+-- Остановить fling
 local function stopFling()
-    if flingPart then
-        flingPart:Destroy()
-        flingPart = nil
-    end
+    if flingPart then flingPart:Destroy() flingPart=nil end
 end
 
--- кнопки
+-- Кнопки
 toggle.MouseButton1Click:Connect(function()
     flingEnabled = not flingEnabled
     if flingEnabled then
