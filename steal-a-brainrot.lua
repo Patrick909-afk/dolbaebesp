@@ -1,25 +1,26 @@
 local Players = game:GetService("Players")
 local lp = Players.LocalPlayer
-local hrp = lp.Character:WaitForChild("HumanoidRootPart")
+local hrp = nil
 
-local flingEnabled = false
+local flingEnabled = true   -- сразу включено
+local flingPower = 500      -- сила fling
 
--- Кнопка для вкл/выкл
-button.MouseButton1Click:Connect(function()
-    flingEnabled = not flingEnabled
-end)
+-- ждем пока появится HumanoidRootPart
+repeat task.wait() until lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+hrp = lp.Character:FindFirstChild("HumanoidRootPart")
 
 while task.wait(0.2) do
-    if flingEnabled then
+    if flingEnabled and hrp and hrp.Parent then
         for _, player in ipairs(Players:GetPlayers()) do
             if player ~= lp and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                local dist = (player.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
-                if dist < 20 then  -- радиус в 20 студий
+                local targetHrp = player.Character.HumanoidRootPart
+                local distance = (targetHrp.Position - hrp.Position).Magnitude
+                if distance < 25 then  -- радиус
                     local bv = Instance.new("BodyVelocity")
-                    bv.Velocity = Vector3.new(0, 500, 0)  -- сильно вверх
-                    bv.MaxForce = Vector3.new(1e5,1e5,1e5)
-                    bv.Parent = player.Character.HumanoidRootPart
-                    game:GetService("Debris"):AddItem(bv, 0.2) -- удалим через 0.2 сек
+                    bv.Velocity = Vector3.new(math.random(-1,1)*flingPower, flingPower, math.random(-1,1)*flingPower)
+                    bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+                    bv.Parent = targetHrp
+                    game:GetService("Debris"):AddItem(bv, 0.2)
                 end
             end
         end
