@@ -1,7 +1,6 @@
 -- 🌈 GDE PATRICK HUB X | Key: FREE | by @gde_patrick
 local plr = game.Players.LocalPlayer
 local UIS = game:GetService("UserInputService")
-local rs = game:GetService("RunService")
 local flingPower = 300
 local flingEnabled = false
 local savedBase = nil
@@ -9,10 +8,10 @@ local savedBase = nil
 local sg = Instance.new("ScreenGui", game.CoreGui)
 sg.Name = "PatrickHub"
 
--- ВХОД ПО КЛЮЧУ
+-- Вход по ключу
 local keyFrame = Instance.new("Frame", sg)
-keyFrame.Size = UDim2.new(0,250,0,100)
-keyFrame.Position = UDim2.new(0.5,-125,0.5,-50)
+keyFrame.Size = UDim2.new(0,200,0,90)
+keyFrame.Position = UDim2.new(0.5,-100,0.5,-45)
 keyFrame.BackgroundColor3 = Color3.fromRGB(30,30,40)
 keyFrame.BackgroundTransparency = 0.2
 keyFrame.Active = true
@@ -20,8 +19,8 @@ keyFrame.Draggable = true
 Instance.new("UICorner", keyFrame).CornerRadius = UDim.new(0,8)
 
 local keyBox = Instance.new("TextBox", keyFrame)
-keyBox.PlaceholderText = "Enter Key (hint: FREE)"
-keyBox.Size = UDim2.new(1,-20,0,30)
+keyBox.PlaceholderText = "Enter Key (FREE)"
+keyBox.Size = UDim2.new(1,-20,0,25)
 keyBox.Position = UDim2.new(0,10,0,10)
 keyBox.BackgroundColor3 = Color3.fromRGB(50,50,60)
 keyBox.TextColor3 = Color3.fromRGB(255,255,255)
@@ -31,7 +30,7 @@ Instance.new("UICorner", keyBox).CornerRadius = UDim.new(0,6)
 
 local contBtn = Instance.new("TextButton", keyFrame)
 contBtn.Text = "Continue"
-contBtn.Size = UDim2.new(1,-20,0,30)
+contBtn.Size = UDim2.new(1,-20,0,25)
 contBtn.Position = UDim2.new(0,10,0,50)
 contBtn.BackgroundColor3 = Color3.fromRGB(80,160,255)
 contBtn.TextColor3 = Color3.fromRGB(255,255,255)
@@ -39,10 +38,10 @@ contBtn.Font = Enum.Font.GothamBold
 contBtn.TextSize = 14
 Instance.new("UICorner", contBtn).CornerRadius = UDim.new(0,6)
 
--- ГЛАВНОЕ МЕНЮ (скрыто до ввода ключа)
+-- Главное меню (скрыто до входа)
 local frame = Instance.new("Frame", sg)
-frame.Size = UDim2.new(0,250,0,300)
-frame.Position = UDim2.new(0.5,-125,0.5,-150)
+frame.Size = UDim2.new(0,200,0,240)
+frame.Position = UDim2.new(0.5,-100,0.5,-120)
 frame.BackgroundColor3 = Color3.fromRGB(30,30,40)
 frame.BackgroundTransparency = 0.2
 frame.Visible = false
@@ -51,55 +50,64 @@ frame.Draggable = true
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0,8)
 
 local title = Instance.new("TextLabel", frame)
-title.Text = "🌈 GDE PATRICK HUB"
-title.Size = UDim2.new(1,-30,0,30)
-title.Position = UDim2.new(0,0,0,0)
+title.Text = "GDE PATRICK HUB"
+title.Size = UDim2.new(1,-30,0,25)
+title.Position = UDim2.new(0,5,0,0)
 title.BackgroundTransparency = 1
 title.TextColor3 = Color3.fromRGB(255,255,255)
 title.Font = Enum.Font.GothamBold
-title.TextSize = 16
+title.TextSize = 14
 title.TextXAlignment = Enum.TextXAlignment.Left
-title.TextStrokeTransparency = 0.8
 
 local closeBtn = Instance.new("TextButton", frame)
 closeBtn.Text = "X"
-closeBtn.Size = UDim2.new(0,30,0,30)
-closeBtn.Position = UDim2.new(1,-30,0,0)
+closeBtn.Size = UDim2.new(0,25,0,25)
+closeBtn.Position = UDim2.new(1,-25,0,0)
 closeBtn.BackgroundColor3 = Color3.fromRGB(255,60,60)
 closeBtn.TextColor3 = Color3.fromRGB(255,255,255)
 closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 16
+closeBtn.TextSize = 14
 Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0,6)
 
 local flingBtn = Instance.new("TextButton", frame)
 flingBtn.Text = "Fling: OFF"
-flingBtn.Size = UDim2.new(1,-20,0,30)
-flingBtn.Position = UDim2.new(0,10,0,40)
+flingBtn.Size = UDim2.new(1,-20,0,25)
+flingBtn.Position = UDim2.new(0,10,0,35)
 flingBtn.BackgroundColor3 = Color3.fromRGB(100,100,255)
+flingBtn.TextColor3 = Color3.fromRGB(255,255,255)
+flingBtn.Font = Enum.Font.GothamBold
+flingBtn.TextSize = 13
 Instance.new("UICorner", flingBtn).CornerRadius = UDim.new(0,6)
 
 local powerBox = Instance.new("TextBox", frame)
 powerBox.Text = tostring(flingPower)
-powerBox.Size = UDim2.new(1,-20,0,30)
-powerBox.Position = UDim2.new(0,10,0,80)
+powerBox.Size = UDim2.new(1,-20,0,25)
+powerBox.Position = UDim2.new(0,10,0,70)
 powerBox.BackgroundColor3 = Color3.fromRGB(50,50,60)
 powerBox.TextColor3 = Color3.fromRGB(255,255,255)
 powerBox.Font = Enum.Font.Gotham
-powerBox.TextSize = 14
+powerBox.TextSize = 13
 powerBox.PlaceholderText = "Fling Power"
+Instance.new("UICorner", powerBox).CornerRadius = UDim.new(0,6)
 
 local saveBtn = Instance.new("TextButton", frame)
 saveBtn.Text = "Save Base"
-saveBtn.Size = UDim2.new(1,-20,0,30)
-saveBtn.Position = UDim2.new(0,10,0,120)
+saveBtn.Size = UDim2.new(1,-20,0,25)
+saveBtn.Position = UDim2.new(0,10,0,105)
 saveBtn.BackgroundColor3 = Color3.fromRGB(100,255,100)
+saveBtn.TextColor3 = Color3.fromRGB(0,0,0)
+saveBtn.Font = Enum.Font.GothamBold
+saveBtn.TextSize = 13
 Instance.new("UICorner", saveBtn).CornerRadius = UDim.new(0,6)
 
 local tpBtn = Instance.new("TextButton", frame)
 tpBtn.Text = "TP to Base"
-tpBtn.Size = UDim2.new(1,-20,0,30)
-tpBtn.Position = UDim2.new(0,10,0,160)
+tpBtn.Size = UDim2.new(1,-20,0,25)
+tpBtn.Position = UDim2.new(0,10,0,140)
 tpBtn.BackgroundColor3 = Color3.fromRGB(255,200,100)
+tpBtn.TextColor3 = Color3.fromRGB(0,0,0)
+tpBtn.Font = Enum.Font.GothamBold
+tpBtn.TextSize = 13
 Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0,6)
 
 local info = Instance.new("TextLabel", frame)
@@ -158,11 +166,14 @@ spawn(function()
   if flingEnabled and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
    for _,v in pairs(game.Players:GetPlayers()) do
     if v~=plr and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-     local dir = (v.Character.HumanoidRootPart.Position - plr.Character.HumanoidRootPart.Position).Unit
-     v.Character.HumanoidRootPart.Velocity = dir * flingPower * 5 -- прям сильно отбрасывает
+     local dist = (v.Character.HumanoidRootPart.Position - plr.Character.HumanoidRootPart.Position).Magnitude
+     if dist < 25 then -- радиус действия флинга
+      local dir = (v.Character.HumanoidRootPart.Position - plr.Character.HumanoidRootPart.Position).Unit
+      v.Character.HumanoidRootPart.Velocity = dir * flingPower*5
+     end
     end
    end
-   -- анти-замедление самого себя
+   -- твой персонаж не тормозится
    plr.Character.HumanoidRootPart.Velocity = Vector3.new(0,0,0)
   end
  end
