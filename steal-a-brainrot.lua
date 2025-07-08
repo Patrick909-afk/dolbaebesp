@@ -1,30 +1,24 @@
--- Fling Script with invisible part & GUI
+-- FlingPart спереди, чтобы не кидало тебя
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local lp = Players.LocalPlayer
-local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") or nil
 
--- создаём невидимую fling деталь
-local flingPart = Instance.new("Part")
-flingPart.Size = Vector3.new(5,5,5)
-flingPart.Transparency = 1
-flingPart.Anchored = false
-flingPart.CanCollide = true
-flingPart.Massless = true
-flingPart.Name = "FlingPart"
-flingPart.Parent = workspace
-
--- Привязать flingPart к персонажу
-local weld = Instance.new("WeldConstraint")
-weld.Part0 = hrp
-weld.Part1 = flingPart
-weld.Parent = flingPart
-
--- AngularVelocity для вращения
-local av = Instance.new("BodyAngularVelocity")
-av.AngularVelocity = Vector3.new(0,50000,0) -- 50000 по Y
-av.MaxTorque = Vector3.new(1e9,1e9,1e9)
-av.P = 1250
-av.Parent = flingPart
+local function createFlingPart()
+    local part = Instance.new("Part")
+    part.Name = "FlingPart"
+    part.Size = Vector3.new(5,5,5)
+    part.Transparency = 1
+    part.Anchored = false
+    part.CanCollide = true -- для других
+    part.Massless = true
+    part.Parent = workspace
+    local av = Instance.new("BodyAngularVelocity")
+    av.AngularVelocity = Vector3.new(0,50000,0)
+    av.MaxTorque = Vector3.new(1e9,1e9,1e9)
+    av.P = 1250
+    av.Parent = part
+    return part, av
+end
 
 -- GUI
 local gui = Instance.new("ScreenGui", game:GetService("CoreGui"))
@@ -51,14 +45,41 @@ closeBtn.Text = "X"
 closeBtn.BackgroundColor3 = Color3.fromRGB(200,80,80)
 closeBtn.TextColor3 = Color3.new(1,1,1)
 
--- при нажатии включить вращение (уже включено, но перезапустим)
+local flingActive = false
+local flingPart, av = createFlingPart()
+
+-- держим flingPart всегда перед тобой
+RunService.Heartbeat:Connect(function()
+    if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") and flingPart then
+        local hrp = lp.Character.HumanoidRootPart
+        flingPart.Position = hrp.Position + hrp.CFrame.LookVector * 4
+    end
+end)
+
+-- при смерти пересоздать flingPart
+lp.CharacterAdded:Connect(function(char)
+    char:WaitForChild("HumanoidRootPart")
+    if flingPart then flingPart:Destroy() end
+    flingPart, av = createFlingPart()
+end)
+
+-- при нажатии включаем вращение
 flingBtn.MouseButton1Click:Connect(function()
-    av.AngularVelocity = Vector3.new(0,50000,0)
+    flingActive = not flingActive
+    if flingActive then
+        av.AngularVelocity = Vector3.new(0,50000,0)
+        flingBtn.Text = "ON"
+        flingBtn.BackgroundColor3 = Color3.fromRGB(100,255,100)
+    else
+        av.AngularVelocity = Vector3.new(0,0,0)
+        flingBtn.Text = "FLING"
+        flingBtn.BackgroundColor3 = Color3.fromRGB(80,200,80)
+    end
 end)
 
 closeBtn.MouseButton1Click:Connect(function()
     gui:Destroy()
-    flingPart:Destroy()
+    if flingPart then flingPart:Destroy() end
 end)
 
-print("Fling script loaded. Подойди к игроку, нажми Fling и он улетит!")
+print("✅ Fling script loaded! Подойди к игроку, включи и смотри как его кидает.")
