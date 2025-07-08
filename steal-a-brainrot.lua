@@ -6,7 +6,7 @@ local char=player.Character or player.CharacterAdded:Wait()
 local hrp=char:WaitForChild("HumanoidRootPart")
 
 local savedPos=nil
-local flingOn,flyOn,autoHitOn,spamOn=false,false,false,false
+local flingOn,flyOn,autoHitOn,spamOn,speedOn,jumpOn=false,false,false,false,false,false
 local flingPower,speedPower,jumpPower,flyPower=50000,16,50,50
 local flingPart,flyGyro,flyBV
 
@@ -51,8 +51,8 @@ Instance.new("UICorner",btn)
 
 -- Главное меню
 local main=Instance.new("Frame",gui)
-main.Size=UDim2.new(0,280,0,320)
-main.Position=UDim2.new(0.5,-140,0.5,-160)
+main.Size=UDim2.new(0,300,0,350)
+main.Position=UDim2.new(0.5,-150,0.5,-175)
 main.BackgroundColor3=Color3.fromRGB(20,20,30)
 main.BackgroundTransparency=0.3
 main.Visible=false
@@ -87,72 +87,68 @@ local layout=Instance.new("UIListLayout",scroll)
 layout.Padding=UDim.new(0,4)
 
 -- Перетаскивание
-local drag=false;local dragStart;local startPos
+local dragging,dragStart,startPos
 title.InputBegan:Connect(function(input)
-if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
-drag=true;dragStart=input.Position;startPos=main.Position end end)
+    if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
+        dragging=true;dragStart=input.Position;startPos=main.Position end end)
 UIS.InputChanged:Connect(function(input)
-if drag and (input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch) then
-local delta=input.Position-dragStart
-main.Position=UDim2.new(startPos.X.Scale,startPos.X.Offset+delta.X,startPos.Y.Scale,startPos.Y.Offset+delta.Y)
-end end)
-UIS.InputEnded:Connect(function(input) if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then drag=false end end)
+    if dragging and (input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch) then
+        local delta=input.Position-dragStart
+        main.Position=UDim2.new(startPos.X.Scale,startPos.X.Offset+delta.X,startPos.Y.Scale,startPos.Y.Offset+delta.Y)
+    end end)
+UIS.InputEnded:Connect(function(input) if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then dragging=false end end)
 
--- Кнопки и слайдеры
+-- Утилы
 local function newBtn(txt,callback)
-local b=Instance.new("TextButton",scroll)
-b.Size=UDim2.new(0.92,0,0,26)
-b.Text=txt
-b.Font=Enum.Font.Gotham
-b.TextColor3=Color3.new(1,1,1)
-b.BackgroundColor3=Color3.fromRGB(50,50,60)
-Instance.new("UICorner",b)
-b.MouseButton1Click:Connect(callback)
+    local b=Instance.new("TextButton",scroll)
+    b.Size=UDim2.new(0.92,0,0,26)
+    b.Text=txt
+    b.Font=Enum.Font.Gotham
+    b.TextColor3=Color3.new(1,1,1)
+    b.BackgroundColor3=Color3.fromRGB(50,50,60)
+    Instance.new("UICorner",b)
+    b.MouseButton1Click:Connect(callback)
 end
 
-local function newSlider(label,min,max,default,callback)
-local frame=Instance.new("Frame",scroll)
-frame.Size=UDim2.new(0.92,0,0,26)
-frame.BackgroundTransparency=1
-
-local lbl=Instance.new("TextLabel",frame)
-lbl.Size=UDim2.new(0.4,0,1,0)
-lbl.Text=label
-lbl.Font=Enum.Font.Gotham
-lbl.TextColor3=Color3.new(1,1,1)
-lbl.BackgroundTransparency=1
-lbl.TextXAlignment="Left"
-
-local box=Instance.new("TextBox",frame)
-box.Size=UDim2.new(0.6,0,1,0)
-box.Position=UDim2.new(0.4,0,0,0)
-box.Text=tostring(default)
-box.Font=Enum.Font.Gotham
-box.TextColor3=Color3.new(1,1,1)
-box.BackgroundColor3=Color3.fromRGB(40,40,50)
-Instance.new("UICorner",box)
-box.FocusLost:Connect(function()
-local v=tonumber(box.Text)
-if v and v>=min and v<=max then callback(v) else box.Text=tostring(default) end
-end)
+local function newSlider(label,default,callback)
+    local f=Instance.new("Frame",scroll)
+    f.Size=UDim2.new(0.92,0,0,26)
+    f.BackgroundTransparency=1
+    local l=Instance.new("TextLabel",f)
+    l.Size=UDim2.new(0.5,0,1,0)
+    l.Text=label..": "..default
+    l.Font=Enum.Font.Gotham
+    l.TextColor3=Color3.new(1,1,1)
+    l.BackgroundTransparency=1
+    l.TextXAlignment="Left"
+    local s=Instance.new("TextButton",f)
+    s.Size=UDim2.new(0.5,0,1,0)
+    s.Position=UDim2.new(0.5,0,0,0)
+    s.Text="➕"
+    s.BackgroundColor3=Color3.fromRGB(40,40,50)
+    Instance.new("UICorner",s)
+    s.MouseButton1Click:Connect(function()
+        callback(default+10)
+        default=default+10
+        l.Text=label..": "..default
+    end)
 end
 
 -- Слайдеры
-newSlider("Fling Power",1000,100000,flingPower,function(v) flingPower=v end)
-newSlider("Speed",16,100,speedPower,function(v) speedPower=v; if speedOn then char:FindFirstChildOfClass("Humanoid").WalkSpeed=v end end)
-newSlider("Jump",50,200,jumpPower,function(v) jumpPower=v; if jumpOn then char:FindFirstChildOfClass("Humanoid").JumpPower=v end end)
-newSlider("Fly Power",20,200,flyPower,function(v) flyPower=v end)
+newSlider("Fling",flingPower,function(v) flingPower=v end)
+newSlider("Speed",speedPower,function(v) speedPower=v;if speedOn then char:FindFirstChildOfClass("Humanoid").WalkSpeed=v end end)
+newSlider("Jump",jumpPower,function(v) jumpPower=v;if jumpOn then char:FindFirstChildOfClass("Humanoid").JumpPower=v end end)
+newSlider("Fly",flyPower,function(v) flyPower=v end)
 
--- Функции
+-- Кнопки
 newBtn("Fling ON/OFF",function()
 flingOn=not flingOn
 if flingOn and not flingPart then
-flingPart=Instance.new("BodyAngularVelocity",hrp)
-flingPart.AngularVelocity=Vector3.new(0,flingPower,0)
-flingPart.MaxTorque=Vector3.new(0,math.huge,0)
-flingPart.P=math.huge
-elseif not flingOn and flingPart then flingPart:Destroy();flingPart=nil end
-end)
+    flingPart=Instance.new("BodyAngularVelocity",hrp)
+    flingPart.AngularVelocity=Vector3.new(0,flingPower,0)
+    flingPart.MaxTorque=Vector3.new(0,math.huge,0)
+    flingPart.P=math.huge
+elseif not flingOn and flingPart then flingPart:Destroy();flingPart=nil end end)
 
 newBtn("Fly ON/OFF",function()
 flyOn=not flyOn
@@ -161,39 +157,26 @@ flyGyro=Instance.new("BodyGyro",hrp)
 flyGyro.P=9e4;flyGyro.MaxTorque=Vector3.new(9e4,9e4,9e4)
 flyBV=Instance.new("BodyVelocity",hrp)
 flyBV.Velocity=Vector3.new(0,flyPower,0);flyBV.MaxForce=Vector3.new(9e4,9e4,9e4)
-else
-if flyGyro then flyGyro:Destroy() end;if flyBV then flyBV:Destroy() end
-end
-end)
+else if flyGyro then flyGyro:Destroy() end;if flyBV then flyBV:Destroy() end end end)
 
-newBtn("Speed ON/OFF",function()
-speedOn=not speedOn
-local hum=char:FindFirstChildOfClass("Humanoid")
-if speedOn then hum.WalkSpeed=speedPower else hum.WalkSpeed=16 end
-end)
+newBtn("Speed ON/OFF",function() speedOn=not speedOn;local h=char:FindFirstChildOfClass("Humanoid")
+if speedOn then h.WalkSpeed=speedPower else h.WalkSpeed=16 end end)
 
-newBtn("Jump ON/OFF",function()
-jumpOn=not jumpOn
-local hum=char:FindFirstChildOfClass("Humanoid")
-if jumpOn then hum.JumpPower=jumpPower else hum.JumpPower=50 end
-end)
+newBtn("Jump ON/OFF",function() jumpOn=not jumpOn;local h=char:FindFirstChildOfClass("Humanoid")
+if jumpOn then h.JumpPower=jumpPower else h.JumpPower=50 end end)
 
 newBtn("AutoHit ON/OFF",function() autoHitOn=not autoHitOn end)
 newBtn("Spam ON/OFF",function() spamOn=not spamOn end)
-newBtn("Invisible",function() for _,v in pairs(char:GetDescendants()) do if v:IsA("BasePart") then v.Transparency=1 end end end)
-newBtn("Random color",function() for _,v in pairs(char:GetDescendants()) do if v:IsA("BasePart") then v.Color=Color3.new(math.random(),math.random(),math.random()) end end end)
 newBtn("Save base pos",function() savedPos=hrp.Position end)
-newBtn("TP to base",function() if savedPos then TS:Create(hrp,TweenInfo.new(1),{CFrame=CFrame.new(savedPos)}):Play() end end)
+newBtn("TP to base",function() if savedPos then TS:Create(hrp,TweenInfo.new(3),{CFrame=CFrame.new(savedPos)}):Play() end end)
 
 -- Лупы
 spawn(function() while wait(0.1) do
 if autoHitOn then local t=player.Backpack:FindFirstChildOfClass("Tool") or char:FindFirstChildOfClass("Tool") if t then t:Activate() end end
 if spamOn then pcall(function() game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("PatrickHub op","All") end) end
 if flyOn and flyBV then flyBV.Velocity=Vector3.new(0,flyPower,0);flyGyro.CFrame=workspace.CurrentCamera.CFrame end
-if flingPart then flingPart.AngularVelocity=Vector3.new(0,flingPower,0) end
-end end)
+if flingPart then flingPart.AngularVelocity=Vector3.new(0,flingPower,0) end end end)
 
--- Перереспавн
 player.CharacterAdded:Connect(function(c)
 char=c;wait(1);hrp=char:WaitForChild("HumanoidRootPart")
 if speedOn then char:FindFirstChildOfClass("Humanoid").WalkSpeed=speedPower end
@@ -209,8 +192,6 @@ flingPart=Instance.new("BodyAngularVelocity",hrp)
 flingPart.AngularVelocity=Vector3.new(0,flingPower,0)
 flingPart.MaxTorque=Vector3.new(0,math.huge,0)
 flingPart.P=math.huge
-end
-end)
+end end)
 
--- Авторизация
 btn.MouseButton1Click:Connect(function() if keyBox.Text=="FREE" then auth.Visible=false;main.Visible=true else msg.Text="Неверный ключ!" end end)
