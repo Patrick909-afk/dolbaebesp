@@ -1,6 +1,5 @@
 -- 🌈 GDE PATRICK HUB X | Key: FREE | by @gde_patrick
 local plr = game.Players.LocalPlayer
-local UIS = game:GetService("UserInputService")
 local flingPower = 300
 local flingEnabled = false
 local savedBase = nil
@@ -8,7 +7,7 @@ local savedBase = nil
 local sg = Instance.new("ScreenGui", game.CoreGui)
 sg.Name = "PatrickHub"
 
--- Вход по ключу
+-- Вход
 local keyFrame = Instance.new("Frame", sg)
 keyFrame.Size = UDim2.new(0,200,0,90)
 keyFrame.Position = UDim2.new(0.5,-100,0.5,-45)
@@ -16,7 +15,7 @@ keyFrame.BackgroundColor3 = Color3.fromRGB(30,30,40)
 keyFrame.BackgroundTransparency = 0.2
 keyFrame.Active = true
 keyFrame.Draggable = true
-Instance.new("UICorner", keyFrame).CornerRadius = UDim.new(0,8)
+Instance.new("UICorner", keyFrame)
 
 local keyBox = Instance.new("TextBox", keyFrame)
 keyBox.PlaceholderText = "Enter Key (FREE)"
@@ -26,7 +25,7 @@ keyBox.BackgroundColor3 = Color3.fromRGB(50,50,60)
 keyBox.TextColor3 = Color3.fromRGB(255,255,255)
 keyBox.Font = Enum.Font.Gotham
 keyBox.TextSize = 14
-Instance.new("UICorner", keyBox).CornerRadius = UDim.new(0,6)
+Instance.new("UICorner", keyBox)
 
 local contBtn = Instance.new("TextButton", keyFrame)
 contBtn.Text = "Continue"
@@ -36,18 +35,18 @@ contBtn.BackgroundColor3 = Color3.fromRGB(80,160,255)
 contBtn.TextColor3 = Color3.fromRGB(255,255,255)
 contBtn.Font = Enum.Font.GothamBold
 contBtn.TextSize = 14
-Instance.new("UICorner", contBtn).CornerRadius = UDim.new(0,6)
+Instance.new("UICorner", contBtn)
 
--- Главное меню (скрыто до входа)
+-- Главное меню
 local frame = Instance.new("Frame", sg)
-frame.Size = UDim2.new(0,200,0,240)
-frame.Position = UDim2.new(0.5,-100,0.5,-120)
+frame.Size = UDim2.new(0,200,0,200)
+frame.Position = UDim2.new(0.5,-100,0.5,-100)
 frame.BackgroundColor3 = Color3.fromRGB(30,30,40)
 frame.BackgroundTransparency = 0.2
 frame.Visible = false
 frame.Active = true
 frame.Draggable = true
-Instance.new("UICorner", frame).CornerRadius = UDim.new(0,8)
+Instance.new("UICorner", frame)
 
 local title = Instance.new("TextLabel", frame)
 title.Text = "GDE PATRICK HUB"
@@ -67,7 +66,7 @@ closeBtn.BackgroundColor3 = Color3.fromRGB(255,60,60)
 closeBtn.TextColor3 = Color3.fromRGB(255,255,255)
 closeBtn.Font = Enum.Font.GothamBold
 closeBtn.TextSize = 14
-Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0,6)
+Instance.new("UICorner", closeBtn)
 
 local flingBtn = Instance.new("TextButton", frame)
 flingBtn.Text = "Fling: OFF"
@@ -77,7 +76,7 @@ flingBtn.BackgroundColor3 = Color3.fromRGB(100,100,255)
 flingBtn.TextColor3 = Color3.fromRGB(255,255,255)
 flingBtn.Font = Enum.Font.GothamBold
 flingBtn.TextSize = 13
-Instance.new("UICorner", flingBtn).CornerRadius = UDim.new(0,6)
+Instance.new("UICorner", flingBtn)
 
 local powerBox = Instance.new("TextBox", frame)
 powerBox.Text = tostring(flingPower)
@@ -88,7 +87,7 @@ powerBox.TextColor3 = Color3.fromRGB(255,255,255)
 powerBox.Font = Enum.Font.Gotham
 powerBox.TextSize = 13
 powerBox.PlaceholderText = "Fling Power"
-Instance.new("UICorner", powerBox).CornerRadius = UDim.new(0,6)
+Instance.new("UICorner", powerBox)
 
 local saveBtn = Instance.new("TextButton", frame)
 saveBtn.Text = "Save Base"
@@ -98,7 +97,7 @@ saveBtn.BackgroundColor3 = Color3.fromRGB(100,255,100)
 saveBtn.TextColor3 = Color3.fromRGB(0,0,0)
 saveBtn.Font = Enum.Font.GothamBold
 saveBtn.TextSize = 13
-Instance.new("UICorner", saveBtn).CornerRadius = UDim.new(0,6)
+Instance.new("UICorner", saveBtn)
 
 local tpBtn = Instance.new("TextButton", frame)
 tpBtn.Text = "TP to Base"
@@ -108,18 +107,9 @@ tpBtn.BackgroundColor3 = Color3.fromRGB(255,200,100)
 tpBtn.TextColor3 = Color3.fromRGB(0,0,0)
 tpBtn.Font = Enum.Font.GothamBold
 tpBtn.TextSize = 13
-Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0,6)
+Instance.new("UICorner", tpBtn)
 
-local info = Instance.new("TextLabel", frame)
-info.Text = "by @gde_patrick"
-info.Size = UDim2.new(1,0,0,20)
-info.Position = UDim2.new(0,0,1,-20)
-info.BackgroundTransparency = 1
-info.TextColor3 = Color3.fromRGB(200,200,200)
-info.Font = Enum.Font.Gotham
-info.TextSize = 12
-
--- обработка кнопок
+-- Логика
 contBtn.MouseButton1Click:Connect(function()
  if keyBox.Text == "FREE" then
    frame.Visible = true
@@ -143,38 +133,35 @@ powerBox.FocusLost:Connect(function()
 end)
 
 saveBtn.MouseButton1Click:Connect(function()
- if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-   savedBase = plr.Character.HumanoidRootPart.Position
- end
+ local hrp = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+ if hrp then savedBase = hrp.Position end
 end)
 
 tpBtn.MouseButton1Click:Connect(function()
- if savedBase and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-  local hrp = plr.Character.HumanoidRootPart
-  local dist = (savedBase - hrp.Position).Magnitude
-  local steps = math.clamp(dist/10,10,100)
-  for i=1,steps do
-   hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(savedBase), i/steps)
-   wait(0.02)
-  end
+ local hrp = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+ if hrp and savedBase then
+   local dist = (savedBase - hrp.Position).Magnitude
+   local steps = math.clamp(dist/10,10,100)
+   for i=1,steps do
+     hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(savedBase), i/steps)
+     wait(0.02)
+   end
  end
 end)
 
--- fling loop
-spawn(function()
- while wait(0.1) do
-  if flingEnabled and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-   for _,v in pairs(game.Players:GetPlayers()) do
-    if v~=plr and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-     local dist = (v.Character.HumanoidRootPart.Position - plr.Character.HumanoidRootPart.Position).Magnitude
-     if dist < 25 then -- радиус действия флинга
-      local dir = (v.Character.HumanoidRootPart.Position - plr.Character.HumanoidRootPart.Position).Unit
-      v.Character.HumanoidRootPart.Velocity = dir * flingPower*5
+-- Корректный fling: только другие улетают
+game:GetService("RunService").Heartbeat:Connect(function()
+ if flingEnabled and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+  local myHRP = plr.Character.HumanoidRootPart
+  for _,v in ipairs(game.Players:GetPlayers()) do
+   if v ~= plr and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+     local enemyHRP = v.Character.HumanoidRootPart
+     local dist = (enemyHRP.Position - myHRP.Position).Magnitude
+     if dist<25 then
+       enemyHRP.Velocity = (enemyHRP.Position - myHRP.Position).Unit * flingPower
      end
-    end
    end
-   -- твой персонаж не тормозится
-   plr.Character.HumanoidRootPart.Velocity = Vector3.new(0,0,0)
   end
+  myHRP.Velocity = Vector3.new(0,0,0) -- фиксируем себя
  end
 end)
