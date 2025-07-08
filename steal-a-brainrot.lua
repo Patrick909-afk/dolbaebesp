@@ -1,110 +1,90 @@
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
-local Mouse = LocalPlayer:GetMouse()
-local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
-local flingPart = nil
-local spinning = false
+local AutoFling = false
+local Tool = nil
 
--- GUI
-local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-ScreenGui.Name = "MiniFlingGUI"
+-- Поиск тулла в рюкзаке или в руках
+for _,v in pairs(LocalPlayer.Backpack:GetChildren()) do
+    if v:IsA("Tool") then
+        Tool = v
+        break
+    end
+end
+if not Tool and LocalPlayer.Character:FindFirstChildOfClass("Tool") then
+    Tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
+end
 
-local Frame = Instance.new("Frame", ScreenGui)
-Frame.Size = UDim2.new(0, 200, 0, 120)
-Frame.Position = UDim2.new(0.4, 0, 0.4, 0)
-Frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
-Frame.Active = true
-Frame.Draggable = true
+if not Tool then
+    warn("Нужно взять тул в руки перед запуском!")
+    return
+end
 
-local UICorner = Instance.new("UICorner", Frame)
-UICorner.CornerRadius = UDim.new(0,8)
+-- Меню
+local gui = Instance.new("ScreenGui", game.CoreGui)
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0,200,0,80)
+frame.Position = UDim2.new(0,100,0,100)
+frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+frame.Active = true
+frame.Draggable = true
+local uic = Instance.new("UICorner", frame)
+uic.CornerRadius = UDim.new(0,8)
 
-local Close = Instance.new("TextButton", Frame)
-Close.Text = "X"
-Close.Size = UDim2.new(0, 25, 0, 25)
-Close.Position = UDim2.new(1, -30, 0, 5)
-Close.BackgroundColor3 = Color3.fromRGB(200,60,60)
-Close.TextColor3 = Color3.new(1,1,1)
-Close.Font = Enum.Font.GothamBold
-Close.TextSize = 14
+local btn = Instance.new("TextButton", frame)
+btn.Size = UDim2.new(1,-20,0,30)
+btn.Position = UDim2.new(0,10,0,10)
+btn.Text = "Auto Fling: OFF"
+btn.BackgroundColor3 = Color3.fromRGB(80,160,80)
+btn.TextColor3 = Color3.new(1,1,1)
+btn.Font = Enum.Font.Gotham
+btn.TextSize = 14
 
-local flingBtn = Instance.new("TextButton", Frame)
-flingBtn.Text = "FLING NEARBY"
-flingBtn.Size = UDim2.new(0.9, 0, 0, 40)
-flingBtn.Position = UDim2.new(0.05, 0, 0, 35)
-flingBtn.BackgroundColor3 = Color3.fromRGB(60,120,60)
-flingBtn.TextColor3 = Color3.new(1,1,1)
-flingBtn.Font = Enum.Font.GothamBold
-flingBtn.TextSize = 16
+local close = Instance.new("TextButton", frame)
+close.Size = UDim2.new(1,-20,0,30)
+close.Position = UDim2.new(0,10,0,45)
+close.Text = "Close"
+close.BackgroundColor3 = Color3.fromRGB(160,80,80)
+close.TextColor3 = Color3.new(1,1,1)
+close.Font = Enum.Font.Gotham
+close.TextSize = 14
 
-local stopBtn = Instance.new("TextButton", Frame)
-stopBtn.Text = "STOP"
-stopBtn.Size = UDim2.new(0.9, 0, 0, 30)
-stopBtn.Position = UDim2.new(0.05, 0, 0, 80)
-stopBtn.BackgroundColor3 = Color3.fromRGB(120,60,60)
-stopBtn.TextColor3 = Color3.new(1,1,1)
-stopBtn.Font = Enum.Font.GothamBold
-stopBtn.TextSize = 16
-
--- Close
-Close.MouseButton1Click:Connect(function()
-    spinning = false
-    if flingPart then flingPart:Destroy() end
-    ScreenGui:Destroy()
+-- Вкл/выкл
+btn.MouseButton1Click:Connect(function()
+    AutoFling = not AutoFling
+    btn.Text = "Auto Fling: "..(AutoFling and "ON" or "OFF")
 end)
 
--- Find nearest
-local function getNearestPlayer()
-    local nearest = nil
-    local shortest = math.huge
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local dist = (LocalPlayer.Character.HumanoidRootPart.Position - plr.Character.HumanoidRootPart.Position).magnitude
-            if dist < shortest then
-                shortest = dist
-                nearest = plr
+-- Закрыть
+close.MouseButton1Click:Connect(function()
+    gui:Destroy()
+    AutoFling = false
+end)
+
+-- Основной цикл
+RunService.Heartbeat:Connect(function()
+    if AutoFling and Tool and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        -- Найти ближайшего игрока
+        local closest,dist
+        for _,plr in pairs(Players:GetPlayers()) do
+            if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and plr.Character:FindFirstChild("Humanoid") and plr.Character.Humanoid.Health > 0 then
+                local d = (plr.Character.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+                if not dist or d < dist then
+                    dist = d
+                    closest = plr
+                end
             end
         end
+        if closest and dist and dist > 5 then
+            -- Идём к нему
+            LocalPlayer.Character.Humanoid:MoveTo(closest.Character.HumanoidRootPart.Position)
+        elseif closest and dist and dist <= 6 then
+            -- Если рядом, кликаем туллом
+            pcall(function()
+                Tool:Activate()
+            end)
+            wait(0.2)
+        end
     end
-    return nearest
-end
-
--- Fling logic
-local function startFling()
-    local target = getNearestPlayer()
-    if not target then warn("Нет игроков рядом!") return end
-
-    if flingPart then flingPart:Destroy() end
-
-    flingPart = Instance.new("Part")
-    flingPart.Anchored = false
-    flingPart.CanCollide = true
-    flingPart.Size = Vector3.new(5,5,5)
-    flingPart.Position = LocalPlayer.Character.HumanoidRootPart.Position
-    flingPart.Parent = workspace
-
-    local att0 = Instance.new("Attachment", LocalPlayer.Character.HumanoidRootPart)
-    local att1 = Instance.new("Attachment", flingPart)
-
-    local alignPos = Instance.new("AlignPosition", flingPart)
-    alignPos.Attachment0 = att1
-    alignPos.Attachment1 = att0
-    alignPos.RigidityEnabled = false
-    alignPos.MaxForce = 999999999
-    alignPos.Responsiveness = 200
-
-    local vel = Instance.new("BodyAngularVelocity", flingPart)
-    vel.AngularVelocity = Vector3.new(0,50000,0)
-    vel.MaxTorque = Vector3.new(0,math.huge,0)
-    vel.P = math.huge
-
-    spinning = true
-end
-
-flingBtn.MouseButton1Click:Connect(startFling)
-
-stopBtn.MouseButton1Click:Connect(function()
-    spinning = false
-    if flingPart then flingPart:Destroy() end
 end)
