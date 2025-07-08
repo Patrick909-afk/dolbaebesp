@@ -1,93 +1,108 @@
-local Players = game:GetService("Players")
-local PhysicsService = game:GetService("PhysicsService")
-local RunService = game:GetService("RunService")
-local lp = Players.LocalPlayer
+-- made by @gde_patrick
 
--- создаём группу коллизий
-pcall(function()
-    PhysicsService:CreateCollisionGroup("FlingGroup")
-    PhysicsService:CollisionGroupSetCollidable("FlingGroup", "Default", true)
-end)
-
-local function createFlingPart()
-    local part = Instance.new("Part")
-    part.Name = "FlingPart"
-    part.Size = Vector3.new(5,5,5)
-    part.Transparency = 1
-    part.Anchored = false
-    part.CanCollide = true
-    part.Massless = true
-    PhysicsService:SetPartCollisionGroup(part, "FlingGroup")
-    part.Parent = workspace
-    local av = Instance.new("BodyAngularVelocity")
-    av.AngularVelocity = Vector3.new(0,0,0)
-    av.MaxTorque = Vector3.new(1e9,1e9,1e9)
-    av.P = 1250
-    av.Parent = part
-    return part, av
+local plr = game.Players.LocalPlayer
+local char = plr.Character or plr.CharacterAdded:Wait()
+local hats = {}
+for _,v in pairs(char:GetChildren()) do
+    if v:IsA("Accessory") then
+        table.insert(hats, v)
+    end
+end
+if #hats == 0 then
+    warn("No hats found! Hat fling won't work.")
+    return
 end
 
--- GUI
-local gui = Instance.new("ScreenGui", game:GetService("CoreGui"))
-gui.Name = "FlingGUI"
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+ScreenGui.Name = "FlingGui"
 
-local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0,150,0,50)
-frame.Position = UDim2.new(0.5,-75,0.1,0)
-frame.BackgroundColor3 = Color3.fromRGB(40,40,40)
-frame.Active = true
-frame.Draggable = true
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0, 220, 0, 130)
+Frame.Position = UDim2.new(0.5, -110, 0.5, -65)
+Frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+Frame.Active = true
+Frame.Draggable = true
 
-local flingBtn = Instance.new("TextButton", frame)
-flingBtn.Size = UDim2.new(0.7,0,1,0)
-flingBtn.Position = UDim2.new(0,0,0,0)
-flingBtn.Text = "FLING"
-flingBtn.BackgroundColor3 = Color3.fromRGB(80,200,80)
-flingBtn.TextColor3 = Color3.new(1,1,1)
+local UICorner = Instance.new("UICorner", Frame)
+UICorner.CornerRadius = UDim.new(0, 8)
 
-local closeBtn = Instance.new("TextButton", frame)
-closeBtn.Size = UDim2.new(0.3,0,1,0)
-closeBtn.Position = UDim2.new(0.7,0,0,0)
-closeBtn.Text = "X"
-closeBtn.BackgroundColor3 = Color3.fromRGB(200,80,80)
-closeBtn.TextColor3 = Color3.new(1,1,1)
+local AutoFlingButton = Instance.new("TextButton", Frame)
+AutoFlingButton.Size = UDim2.new(0, 200, 0, 40)
+AutoFlingButton.Position = UDim2.new(0,10,0,10)
+AutoFlingButton.BackgroundColor3 = Color3.fromRGB(70,130,180)
+AutoFlingButton.Text = "AutoFling: OFF"
+AutoFlingButton.TextColor3 = Color3.new(1,1,1)
+AutoFlingButton.Font = Enum.Font.GothamBold
+AutoFlingButton.TextSize = 16
 
-local flingActive = false
-local flingPart, av = createFlingPart()
+local CloseButton = Instance.new("TextButton", Frame)
+CloseButton.Size = UDim2.new(0, 25, 0, 25)
+CloseButton.Position = UDim2.new(1, -30, 0, 5)
+CloseButton.BackgroundColor3 = Color3.fromRGB(200,60,60)
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.new(1,1,1)
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.TextSize = 14
 
--- держим flingPart впереди и выше
-RunService.Heartbeat:Connect(function()
-    if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") and flingPart then
-        local hrp = lp.Character.HumanoidRootPart
-        flingPart.Position = hrp.Position + hrp.CFrame.LookVector * 6 + Vector3.new(0,3,0)
-    end
-end)
+local Slider = Instance.new("TextBox", Frame)
+Slider.Size = UDim2.new(0, 200, 0, 30)
+Slider.Position = UDim2.new(0,10,0,60)
+Slider.BackgroundColor3 = Color3.fromRGB(50,50,50)
+Slider.Text = "Force: 50000"
+Slider.TextColor3 = Color3.new(1,1,1)
+Slider.Font = Enum.Font.Gotham
+Slider.TextSize = 14
+Slider.ClearTextOnFocus = true
 
--- при смерти пересоздать flingPart
-lp.CharacterAdded:Connect(function(char)
-    char:WaitForChild("HumanoidRootPart")
-    task.wait(0.2)
-    if flingPart then flingPart:Destroy() end
-    flingPart, av = createFlingPart()
-end)
+local force = 50000
+local autofling = false
 
--- при нажатии включаем вращение
-flingBtn.MouseButton1Click:Connect(function()
-    flingActive = not flingActive
-    if flingActive then
-        av.AngularVelocity = Vector3.new(0,50000,0)
-        flingBtn.Text = "ON"
-        flingBtn.BackgroundColor3 = Color3.fromRGB(100,255,100)
+Slider.FocusLost:Connect(function()
+    local num = tonumber(Slider.Text:match("%d+"))
+    if num then
+        force = num
+        Slider.Text = "Force: "..num
     else
-        av.AngularVelocity = Vector3.new(0,0,0)
-        flingBtn.Text = "FLING"
-        flingBtn.BackgroundColor3 = Color3.fromRGB(80,200,80)
+        Slider.Text = "Force: "..force
     end
 end)
 
-closeBtn.MouseButton1Click:Connect(function()
-    gui:Destroy()
-    if flingPart then flingPart:Destroy() end
+CloseButton.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
 end)
 
-print("✅ Loaded! Подходи к игрокам, включи FLING и смотри как их кидает, а тебя не трогает.")
+AutoFlingButton.MouseButton1Click:Connect(function()
+    autofling = not autofling
+    AutoFlingButton.Text = "AutoFling: "..(autofling and "ON" or "OFF")
+end)
+
+-- антифлинг: убираем физику от других BodyVelocity
+game:GetService("RunService").Stepped:Connect(function()
+    for _,v in pairs(char:GetDescendants()) do
+        if v:IsA("BodyVelocity") or v:IsA("BodyAngularVelocity") or v:IsA("BodyPosition") then
+            if v.Name ~= "OurFlingForce" then
+                v:Destroy()
+            end
+        end
+    end
+end)
+
+-- автофлинг логика
+game:GetService("RunService").Heartbeat:Connect(function()
+    if autofling then
+        for _,player in ipairs(game.Players:GetPlayers()) do
+            if player ~= plr and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local target = player.Character.HumanoidRootPart
+                if (target.Position - char.PrimaryPart.Position).Magnitude < 25 then -- радиус 25
+                    for _,hat in ipairs(hats) do
+                        local bv = Instance.new("BodyVelocity", hat.Handle)
+                        bv.Name = "OurFlingForce"
+                        bv.MaxForce = Vector3.new(1e9,1e9,1e9)
+                        bv.Velocity = (target.Position - char.PrimaryPart.Position).Unit * force
+                        game:GetService("Debris"):AddItem(bv, 0.1)
+                    end
+                end
+            end
+        end
+    end
+end)
