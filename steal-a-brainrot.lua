@@ -1,137 +1,146 @@
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
-local AutoFling = false
-local AntiFling = true
-local MaxForce = 5000
+local target = nil
+local enabled = false
+local hitbox = nil
+local menuVisible = true
 
 -- GUI
-local gui = Instance.new("ScreenGui", game.CoreGui)
-gui.Name = "AutoFlingGUI"
-local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0,180,0,125)
-frame.Position = UDim2.new(0,100,0,100)
-frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
-frame.Active = true
-frame.Draggable = true
-local uic = Instance.new("UICorner", frame)
-uic.CornerRadius = UDim.new(0,8)
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+ScreenGui.Name = "RaidMenu"
 
-local btn = Instance.new("TextButton", frame)
-btn.Size = UDim2.new(1,-20,0,22)
-btn.Position = UDim2.new(0,10,0,10)
-btn.Text = "Auto Fling: OFF"
-btn.BackgroundColor3 = Color3.fromRGB(80,160,80)
-btn.TextColor3 = Color3.new(1,1,1)
-btn.Font = Enum.Font.Gotham
-btn.TextSize = 13
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0, 220, 0, 300)
+Frame.Position = UDim2.new(0.4, -110, 0.4, -150)
+Frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+Frame.Active = true
+Frame.Draggable = true
+Instance.new("UICorner", Frame).CornerRadius = UDim.new(0,8)
 
-local anti = Instance.new("TextButton", frame)
-anti.Size = UDim2.new(1,-20,0,22)
-anti.Position = UDim2.new(0,10,0,37)
-anti.Text = "AntiFling: ON"
-anti.BackgroundColor3 = Color3.fromRGB(100,100,180)
-anti.TextColor3 = Color3.new(1,1,1)
-anti.Font = Enum.Font.Gotham
-anti.TextSize = 13
+local Title = Instance.new("TextLabel", Frame)
+Title.Size = UDim2.new(1, -30, 0, 30)
+Title.BackgroundTransparency = 1
+Title.Text = "⚔ Raid Base"
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 16
+Title.TextColor3 = Color3.new(1,1,1)
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Position = UDim2.new(0,10,0,0)
 
-local plus = Instance.new("TextButton", frame)
-plus.Size = UDim2.new(0.5,-12,0,20)
-plus.Position = UDim2.new(0,10,0,64)
-plus.Text = "+Power"
-plus.BackgroundColor3 = Color3.fromRGB(120,180,120)
-plus.TextColor3 = Color3.new(1,1,1)
-plus.Font = Enum.Font.Gotham
-plus.TextSize = 12
+local Close = Instance.new("TextButton", Frame)
+Close.Size = UDim2.new(0, 25, 0, 25)
+Close.Position = UDim2.new(1,-30,0,2)
+Close.Text = "X"
+Close.BackgroundColor3 = Color3.fromRGB(200,60,60)
+Close.Font = Enum.Font.GothamBold
+Close.TextSize = 14
+Close.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", Close).CornerRadius = UDim.new(0,6)
 
-local minus = Instance.new("TextButton", frame)
-minus.Size = UDim2.new(0.5,-12,0,20)
-minus.Position = UDim2.new(0.5,2,0,64)
-minus.Text = "-Power"
-minus.BackgroundColor3 = Color3.fromRGB(180,120,120)
-minus.TextColor3 = Color3.new(1,1,1)
-minus.Font = Enum.Font.Gotham
-minus.TextSize = 12
+local Toggle = Instance.new("TextButton", Frame)
+Toggle.Size = UDim2.new(1, -20, 0, 30)
+Toggle.Position = UDim2.new(0,10,0,40)
+Toggle.Text = "Raid OFF"
+Toggle.BackgroundColor3 = Color3.fromRGB(200,80,80)
+Toggle.Font = Enum.Font.GothamBold
+Toggle.TextSize = 14
+Toggle.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", Toggle).CornerRadius = UDim.new(0,6)
 
-local close = Instance.new("TextButton", frame)
-close.Size = UDim2.new(1,-20,0,20)
-close.Position = UDim2.new(0,10,0,89)
-close.Text = "Close"
-close.BackgroundColor3 = Color3.fromRGB(160,80,80)
-close.TextColor3 = Color3.new(1,1,1)
-close.Font = Enum.Font.Gotham
-close.TextSize = 12
+local PlayerList = Instance.new("ScrollingFrame", Frame)
+PlayerList.Size = UDim2.new(1, -20, 0, 200)
+PlayerList.Position = UDim2.new(0,10,0,80)
+PlayerList.CanvasSize = UDim2.new(0,0,0,0)
+PlayerList.BackgroundColor3 = Color3.fromRGB(45,45,45)
+PlayerList.ScrollBarThickness = 4
+Instance.new("UICorner", PlayerList).CornerRadius = UDim.new(0,6)
 
--- Button logic
-btn.MouseButton1Click:Connect(function()
-    AutoFling = not AutoFling
-    btn.Text = "Auto Fling: "..(AutoFling and "ON" or "OFF")
-end)
+-- Обновление списка игроков каждые 2 секунды
+local function updateList()
+    PlayerList:ClearAllChildren()
+    local y = 0
+    for _,plr in pairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            local btn = Instance.new("TextButton", PlayerList)
+            btn.Size = UDim2.new(1, -4, 0, 30)
+            btn.Position = UDim2.new(0,2,0,y)
+            btn.Text = plr.Name
+            btn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+            btn.Font = Enum.Font.Gotham
+            btn.TextSize = 14
+            btn.TextColor3 = Color3.new(1,1,1)
+            Instance.new("UICorner", btn).CornerRadius = UDim.new(0,4)
 
-anti.MouseButton1Click:Connect(function()
-    AntiFling = not AntiFling
-    anti.Text = "AntiFling: "..(AntiFling and "ON" or "OFF")
-end)
+            btn.MouseButton1Click:Connect(function()
+                target = plr
+            end)
 
-plus.MouseButton1Click:Connect(function()
-    MaxForce = MaxForce + 1000
-    btn.Text = "Power: "..MaxForce
-end)
+            y = y + 32
+        end
+    end
+    PlayerList.CanvasSize = UDim2.new(0,0,0,y)
+end
 
-minus.MouseButton1Click:Connect(function()
-    MaxForce = math.max(0, MaxForce - 1000)
-    btn.Text = "Power: "..MaxForce
-end)
-
-close.MouseButton1Click:Connect(function()
-    gui:Destroy()
-    AutoFling = false
-end)
-
--- Антифлинг
-RunService.Stepped:Connect(function()
-    if AntiFling and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        local hrp = LocalPlayer.Character.HumanoidRootPart
-        hrp.Velocity = Vector3.zero
-        hrp.RotVelocity = Vector3.zero
-        hrp.AssemblyLinearVelocity = Vector3.zero
-        hrp.AssemblyAngularVelocity = Vector3.zero
+task.spawn(function()
+    while true do
+        updateList()
+        task.wait(2)
     end
 end)
 
--- Визуал: аура
-local aura
-local function createAura()
-    if aura then aura:Destroy() end
-    aura = Instance.new("Part")
-    aura.Shape = Enum.PartType.Ball
-    aura.Material = Enum.Material.Neon
-    aura.Color = Color3.fromRGB(255,0,0)
-    aura.Size = Vector3.new(8,8,8)
-    aura.Anchored = true
-    aura.CanCollide = false
-    aura.Transparency = 0.5
-    aura.Parent = workspace
+-- Функция для создания огромного хитбокса
+local function createHitbox()
+    if hitbox then hitbox:Destroy() end
+    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+        hitbox = Instance.new("Part")
+        hitbox.Size = Vector3.new(500,500,500) -- огромный
+        hitbox.Transparency = 1
+        hitbox.Anchored = true
+        hitbox.CanCollide = false
+        hitbox.Parent = workspace
+        hitbox.Position = target.Character.HumanoidRootPart.Position
+    end
 end
 
--- Основной цикл
-RunService.Heartbeat:Connect(function()
-    if AutoFling and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        local hrp = LocalPlayer.Character.HumanoidRootPart
-        if not aura or not aura.Parent then createAura() end
-        aura.Position = hrp.Position
-
-        for _,plr in pairs(Players:GetPlayers()) do
-            if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and plr.Character.Humanoid.Health>0 then
-                local targetHRP = plr.Character.HumanoidRootPart
-                local dist = (targetHRP.Position - hrp.Position).Magnitude
-                if dist <= 10 then
-                    targetHRP.Velocity = (targetHRP.Position - hrp.Position).Unit * MaxForce
-                end
-            end
+-- Автокликер с максимальной скоростью
+RunService.RenderStepped:Connect(function()
+    if enabled and target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+        if not hitbox or not hitbox.Parent then
+            createHitbox()
         end
-    elseif aura and aura.Parent then
-        aura:Destroy()
+        hitbox.Position = target.Character.HumanoidRootPart.Position
+
+        local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+        if tool then
+            tool:Activate()
+        end
+    end
+end)
+
+-- Переключатель
+Toggle.MouseButton1Click:Connect(function()
+    enabled = not enabled
+    Toggle.Text = enabled and "Raid ON" or "Raid OFF"
+    Toggle.BackgroundColor3 = enabled and Color3.fromRGB(80,200,80) or Color3.fromRGB(200,80,80)
+    if not enabled and hitbox then
+        hitbox:Destroy()
+        hitbox = nil
+    end
+end)
+
+-- Закрыть
+Close.MouseButton1Click:Connect(function()
+    ScreenGui.Enabled = false
+    menuVisible = false
+end)
+
+-- Hotkey (RightShift)
+UserInputService.InputBegan:Connect(function(input, processed)
+    if not processed and input.KeyCode == Enum.KeyCode.RightShift then
+        menuVisible = not menuVisible
+        ScreenGui.Enabled = menuVisible
     end
 end)
