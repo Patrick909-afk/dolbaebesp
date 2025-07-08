@@ -3,12 +3,18 @@
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
+local PhysicsService = game:GetService("PhysicsService")
 local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
 
 local flingPart = nil
 local flingEnabled = false
-local flingPower = 5000 -- начальная мощность
+local flingPower = 5000
+
+-- создаём CollisionGroup
+pcall(function()
+    PhysicsService:CreateCollisionGroup("NoPlayerCollision")
+    PhysicsService:CollisionGroupSetCollidable("NoPlayerCollision", "Default", false)
+end)
 
 -- GUI
 local gui = Instance.new("ScreenGui", game.CoreGui)
@@ -25,7 +31,7 @@ local title = Instance.new("TextLabel", frame)
 title.Size = UDim2.new(1, -30, 0, 30)
 title.Position = UDim2.new(0, 5, 0, 5)
 title.BackgroundTransparency = 1
-title.Text = "Patrick Fling v1"
+title.Text = "Patrick Fling v2"
 title.TextColor3 = Color3.fromRGB(255,255,255)
 title.TextSize = 16
 title.Font = Enum.Font.GothamBold
@@ -67,25 +73,49 @@ slider.TextColor3 = Color3.new(1,1,1)
 slider.TextSize = 14
 slider.Font = Enum.Font.Gotham
 
--- fling logic
+-- fling
 local function startFling()
-    if flingPart then flingPart:Destroy() end
-
+    stopFling()
     flingPart = Instance.new("Part", workspace)
-    flingPart.Name = "PatrickFlingPart"
-    flingPart.Size = Vector3.new(5,5,5)
-    flingPart.Transparency = 1
+    flingPart.Shape = Enum.PartType.Ball
+    flingPart.Size = Vector3.new(8,8,8)
+    flingPart.Transparency = 0.3
+    flingPart.Color = Color3.fromRGB(255,50,50)
     flingPart.Anchored = false
     flingPart.CanCollide = true
+    flingPart.Massless = true
+    flingPart.Name = "PatrickFlingBall"
 
-    local weld = Instance.new("WeldConstraint", flingPart)
-    weld.Part0 = flingPart
-    weld.Part1 = LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+    -- collision
+    pcall(function()
+        PhysicsService:SetPartCollisionGroup(flingPart, "NoPlayerCollision")
+    end)
 
+    -- weld к персонажу
+    local att0 = Instance.new("Attachment", LocalPlayer.Character:WaitForChild("HumanoidRootPart"))
+    local att1 = Instance.new("Attachment", flingPart)
+
+    local align = Instance.new("AlignPosition", flingPart)
+    align.Attachment0 = att1
+    align.Attachment1 = att0
+    align.RigidityEnabled = false
+    align.MaxForce = math.huge
+    align.Responsiveness = 200
+
+    -- кручение
     local gyro = Instance.new("BodyAngularVelocity", flingPart)
     gyro.AngularVelocity = Vector3.new(0, flingPower, 0)
     gyro.MaxTorque = Vector3.new(1e9,1e9,1e9)
-    gyro.P = 1e9
+
+    -- анимация цвета
+    coroutine.wrap(function()
+        while flingEnabled and flingPart do
+            local tween = TweenService:Create(flingPart, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+                {Color = Color3.fromRGB(255, math.random(50,200), math.random(50,200))})
+            tween:Play()
+            tween.Completed:Wait()
+        end
+    end)()
 end
 
 local function stopFling()
@@ -112,11 +142,12 @@ end)
 slider.MouseButton1Click:Connect(function()
     flingPower = flingPower + 500
     powerLabel.Text = "Мощность: "..flingPower
-    if flingEnabled and flingPart then
+    if flingEnabled and flingPart and flingPart:FindFirstChildOfClass("BodyAngularVelocity") then
         flingPart.BodyAngularVelocity.AngularVelocity = Vector3.new(0, flingPower, 0)
     end
 end)
 
 close.MouseButton1Click:Connect(function()
     gui:Destroy()
+    stopFling()
 end)
