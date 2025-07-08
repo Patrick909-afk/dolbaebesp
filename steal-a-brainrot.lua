@@ -1,7 +1,13 @@
--- FlingPart спереди, чтобы не кидало тебя
 local Players = game:GetService("Players")
+local PhysicsService = game:GetService("PhysicsService")
 local RunService = game:GetService("RunService")
 local lp = Players.LocalPlayer
+
+-- создаём группу коллизий
+pcall(function()
+    PhysicsService:CreateCollisionGroup("FlingGroup")
+    PhysicsService:CollisionGroupSetCollidable("FlingGroup", "Default", true)
+end)
 
 local function createFlingPart()
     local part = Instance.new("Part")
@@ -9,11 +15,12 @@ local function createFlingPart()
     part.Size = Vector3.new(5,5,5)
     part.Transparency = 1
     part.Anchored = false
-    part.CanCollide = true -- для других
+    part.CanCollide = true
     part.Massless = true
+    PhysicsService:SetPartCollisionGroup(part, "FlingGroup")
     part.Parent = workspace
     local av = Instance.new("BodyAngularVelocity")
-    av.AngularVelocity = Vector3.new(0,50000,0)
+    av.AngularVelocity = Vector3.new(0,0,0)
     av.MaxTorque = Vector3.new(1e9,1e9,1e9)
     av.P = 1250
     av.Parent = part
@@ -48,17 +55,18 @@ closeBtn.TextColor3 = Color3.new(1,1,1)
 local flingActive = false
 local flingPart, av = createFlingPart()
 
--- держим flingPart всегда перед тобой
+-- держим flingPart впереди и выше
 RunService.Heartbeat:Connect(function()
     if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") and flingPart then
         local hrp = lp.Character.HumanoidRootPart
-        flingPart.Position = hrp.Position + hrp.CFrame.LookVector * 4
+        flingPart.Position = hrp.Position + hrp.CFrame.LookVector * 6 + Vector3.new(0,3,0)
     end
 end)
 
 -- при смерти пересоздать flingPart
 lp.CharacterAdded:Connect(function(char)
     char:WaitForChild("HumanoidRootPart")
+    task.wait(0.2)
     if flingPart then flingPart:Destroy() end
     flingPart, av = createFlingPart()
 end)
@@ -82,4 +90,4 @@ closeBtn.MouseButton1Click:Connect(function()
     if flingPart then flingPart:Destroy() end
 end)
 
-print("✅ Fling script loaded! Подойди к игроку, включи и смотри как его кидает.")
+print("✅ Loaded! Подходи к игрокам, включи FLING и смотри как их кидает, а тебя не трогает.")
