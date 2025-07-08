@@ -1,4 +1,4 @@
--- 🌈 GDE PATRICK HUB X | Key: FREE | by @gde_patrick
+-- 🌈 GDE PATRICK HUB X | by @gde_patrick
 local plr = game.Players.LocalPlayer
 local flingPower = 300
 local flingEnabled = false
@@ -7,50 +7,19 @@ local savedBase = nil
 local sg = Instance.new("ScreenGui", game.CoreGui)
 sg.Name = "PatrickHub"
 
--- Вход
-local keyFrame = Instance.new("Frame", sg)
-keyFrame.Size = UDim2.new(0,200,0,90)
-keyFrame.Position = UDim2.new(0.5,-100,0.5,-45)
-keyFrame.BackgroundColor3 = Color3.fromRGB(30,30,40)
-keyFrame.BackgroundTransparency = 0.2
-keyFrame.Active = true
-keyFrame.Draggable = true
-Instance.new("UICorner", keyFrame)
-
-local keyBox = Instance.new("TextBox", keyFrame)
-keyBox.PlaceholderText = "Enter Key (FREE)"
-keyBox.Size = UDim2.new(1,-20,0,25)
-keyBox.Position = UDim2.new(0,10,0,10)
-keyBox.BackgroundColor3 = Color3.fromRGB(50,50,60)
-keyBox.TextColor3 = Color3.fromRGB(255,255,255)
-keyBox.Font = Enum.Font.Gotham
-keyBox.TextSize = 14
-Instance.new("UICorner", keyBox)
-
-local contBtn = Instance.new("TextButton", keyFrame)
-contBtn.Text = "Continue"
-contBtn.Size = UDim2.new(1,-20,0,25)
-contBtn.Position = UDim2.new(0,10,0,50)
-contBtn.BackgroundColor3 = Color3.fromRGB(80,160,255)
-contBtn.TextColor3 = Color3.fromRGB(255,255,255)
-contBtn.Font = Enum.Font.GothamBold
-contBtn.TextSize = 14
-Instance.new("UICorner", contBtn)
-
 -- Главное меню
 local frame = Instance.new("Frame", sg)
-frame.Size = UDim2.new(0,200,0,200)
-frame.Position = UDim2.new(0.5,-100,0.5,-100)
+frame.Size = UDim2.new(0, 200, 0, 160)
+frame.Position = UDim2.new(0.5, -100, 0.5, -80)
 frame.BackgroundColor3 = Color3.fromRGB(30,30,40)
 frame.BackgroundTransparency = 0.2
-frame.Visible = false
 frame.Active = true
 frame.Draggable = true
 Instance.new("UICorner", frame)
 
 local title = Instance.new("TextLabel", frame)
 title.Text = "GDE PATRICK HUB"
-title.Size = UDim2.new(1,-30,0,25)
+title.Size = UDim2.new(1,-25,0,25)
 title.Position = UDim2.new(0,5,0,0)
 title.BackgroundTransparency = 1
 title.TextColor3 = Color3.fromRGB(255,255,255)
@@ -60,18 +29,18 @@ title.TextXAlignment = Enum.TextXAlignment.Left
 
 local closeBtn = Instance.new("TextButton", frame)
 closeBtn.Text = "X"
-closeBtn.Size = UDim2.new(0,25,0,25)
-closeBtn.Position = UDim2.new(1,-25,0,0)
+closeBtn.Size = UDim2.new(0,20,0,20)
+closeBtn.Position = UDim2.new(1,-22,0,2)
 closeBtn.BackgroundColor3 = Color3.fromRGB(255,60,60)
 closeBtn.TextColor3 = Color3.fromRGB(255,255,255)
 closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 14
+closeBtn.TextSize = 12
 Instance.new("UICorner", closeBtn)
 
 local flingBtn = Instance.new("TextButton", frame)
 flingBtn.Text = "Fling: OFF"
 flingBtn.Size = UDim2.new(1,-20,0,25)
-flingBtn.Position = UDim2.new(0,10,0,35)
+flingBtn.Position = UDim2.new(0,10,0,30)
 flingBtn.BackgroundColor3 = Color3.fromRGB(100,100,255)
 flingBtn.TextColor3 = Color3.fromRGB(255,255,255)
 flingBtn.Font = Enum.Font.GothamBold
@@ -81,7 +50,7 @@ Instance.new("UICorner", flingBtn)
 local powerBox = Instance.new("TextBox", frame)
 powerBox.Text = tostring(flingPower)
 powerBox.Size = UDim2.new(1,-20,0,25)
-powerBox.Position = UDim2.new(0,10,0,70)
+powerBox.Position = UDim2.new(0,10,0,60)
 powerBox.BackgroundColor3 = Color3.fromRGB(50,50,60)
 powerBox.TextColor3 = Color3.fromRGB(255,255,255)
 powerBox.Font = Enum.Font.Gotham
@@ -92,7 +61,7 @@ Instance.new("UICorner", powerBox)
 local saveBtn = Instance.new("TextButton", frame)
 saveBtn.Text = "Save Base"
 saveBtn.Size = UDim2.new(1,-20,0,25)
-saveBtn.Position = UDim2.new(0,10,0,105)
+saveBtn.Position = UDim2.new(0,10,0,90)
 saveBtn.BackgroundColor3 = Color3.fromRGB(100,255,100)
 saveBtn.TextColor3 = Color3.fromRGB(0,0,0)
 saveBtn.Font = Enum.Font.GothamBold
@@ -102,7 +71,7 @@ Instance.new("UICorner", saveBtn)
 local tpBtn = Instance.new("TextButton", frame)
 tpBtn.Text = "TP to Base"
 tpBtn.Size = UDim2.new(1,-20,0,25)
-tpBtn.Position = UDim2.new(0,10,0,140)
+tpBtn.Position = UDim2.new(0,10,0,120)
 tpBtn.BackgroundColor3 = Color3.fromRGB(255,200,100)
 tpBtn.TextColor3 = Color3.fromRGB(0,0,0)
 tpBtn.Font = Enum.Font.GothamBold
@@ -110,13 +79,6 @@ tpBtn.TextSize = 13
 Instance.new("UICorner", tpBtn)
 
 -- Логика
-contBtn.MouseButton1Click:Connect(function()
- if keyBox.Text == "FREE" then
-   frame.Visible = true
-   keyFrame.Visible = false
- end
-end)
-
 closeBtn.MouseButton1Click:Connect(function()
  frame.Visible = not frame.Visible
 end)
@@ -149,7 +111,7 @@ tpBtn.MouseButton1Click:Connect(function()
  end
 end)
 
--- Корректный fling: только другие улетают
+-- Рабочий fling: мы НЕ двигаем себя, а другим ставим Velocity
 game:GetService("RunService").Heartbeat:Connect(function()
  if flingEnabled and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
   local myHRP = plr.Character.HumanoidRootPart
@@ -157,11 +119,11 @@ game:GetService("RunService").Heartbeat:Connect(function()
    if v ~= plr and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
      local enemyHRP = v.Character.HumanoidRootPart
      local dist = (enemyHRP.Position - myHRP.Position).Magnitude
-     if dist<25 then
+     if dist<20 then
        enemyHRP.Velocity = (enemyHRP.Position - myHRP.Position).Unit * flingPower
      end
    end
   end
-  myHRP.Velocity = Vector3.new(0,0,0) -- фиксируем себя
+  myHRP.Velocity = Vector3.zero
  end
 end)
