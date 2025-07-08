@@ -1,9 +1,8 @@
 -- 🌈 GDE PATRICK HUB X | Key: FREE | by @gde_patrick
 local plr = game.Players.LocalPlayer
 local UIS = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-
-local flingPower = 100
+local rs = game:GetService("RunService")
+local flingPower = 300
 local flingEnabled = false
 local savedBase = nil
 
@@ -53,11 +52,24 @@ Instance.new("UICorner", frame).CornerRadius = UDim.new(0,8)
 
 local title = Instance.new("TextLabel", frame)
 title.Text = "🌈 GDE PATRICK HUB"
-title.Size = UDim2.new(1,0,0,30)
+title.Size = UDim2.new(1,-30,0,30)
+title.Position = UDim2.new(0,0,0,0)
 title.BackgroundTransparency = 1
 title.TextColor3 = Color3.fromRGB(255,255,255)
 title.Font = Enum.Font.GothamBold
 title.TextSize = 16
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.TextStrokeTransparency = 0.8
+
+local closeBtn = Instance.new("TextButton", frame)
+closeBtn.Text = "X"
+closeBtn.Size = UDim2.new(0,30,0,30)
+closeBtn.Position = UDim2.new(1,-30,0,0)
+closeBtn.BackgroundColor3 = Color3.fromRGB(255,60,60)
+closeBtn.TextColor3 = Color3.fromRGB(255,255,255)
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextSize = 16
+Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0,6)
 
 local flingBtn = Instance.new("TextButton", frame)
 flingBtn.Text = "Fling: OFF"
@@ -99,7 +111,7 @@ info.TextColor3 = Color3.fromRGB(200,200,200)
 info.Font = Enum.Font.Gotham
 info.TextSize = 12
 
--- проверка ключа
+-- обработка кнопок
 contBtn.MouseButton1Click:Connect(function()
  if keyBox.Text == "FREE" then
    frame.Visible = true
@@ -107,32 +119,32 @@ contBtn.MouseButton1Click:Connect(function()
  end
 end)
 
--- fling
+closeBtn.MouseButton1Click:Connect(function()
+ frame.Visible = not frame.Visible
+end)
+
 flingBtn.MouseButton1Click:Connect(function()
  flingEnabled = not flingEnabled
  flingBtn.Text = "Fling: "..(flingEnabled and "ON" or "OFF")
 end)
 
--- power
 powerBox.FocusLost:Connect(function()
  local n = tonumber(powerBox.Text)
  if n then flingPower = n end
  powerBox.Text = tostring(flingPower)
 end)
 
--- save
 saveBtn.MouseButton1Click:Connect(function()
  if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
    savedBase = plr.Character.HumanoidRootPart.Position
  end
 end)
 
--- tp
 tpBtn.MouseButton1Click:Connect(function()
  if savedBase and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
   local hrp = plr.Character.HumanoidRootPart
   local dist = (savedBase - hrp.Position).Magnitude
-  local steps = 50
+  local steps = math.clamp(dist/10,10,100)
   for i=1,steps do
    hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(savedBase), i/steps)
    wait(0.02)
@@ -140,22 +152,18 @@ tpBtn.MouseButton1Click:Connect(function()
  end
 end)
 
--- fling loop + anti ragdoll
+-- fling loop
 spawn(function()
  while wait(0.1) do
-   pcall(function()
-    -- анти-флинг
-    if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-     plr.Character.HumanoidRootPart.Velocity = Vector3.new(0,0,0)
+  if flingEnabled and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+   for _,v in pairs(game.Players:GetPlayers()) do
+    if v~=plr and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+     local dir = (v.Character.HumanoidRootPart.Position - plr.Character.HumanoidRootPart.Position).Unit
+     v.Character.HumanoidRootPart.Velocity = dir * flingPower * 5 -- прям сильно отбрасывает
     end
-    if flingEnabled and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-      for _,v in pairs(game.Players:GetPlayers()) do
-       if v~=plr and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-        local dir = (v.Character.HumanoidRootPart.Position - plr.Character.HumanoidRootPart.Position).Unit
-        v.Character.HumanoidRootPart.Velocity = dir * flingPower
-       end
-      end
-    end
-   end)
+   end
+   -- анти-замедление самого себя
+   plr.Character.HumanoidRootPart.Velocity = Vector3.new(0,0,0)
+  end
  end
 end)
