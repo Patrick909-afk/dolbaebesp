@@ -1,5 +1,4 @@
 -- [[🔥 Fat Script by @gde_patrick 😎]]
-
 local plrs=game:GetService("Players")
 local lp=plrs.LocalPlayer
 local chr=lp.Character or lp.CharacterAdded:Wait()
@@ -9,33 +8,26 @@ local rs=game:GetService("RunService")
 local uis=game:GetService("UserInputService")
 local cam=workspace.CurrentCamera
 local tool=nil
-local savedPos=nil
-
 for _,v in ipairs(lp.Backpack:GetChildren()) do if v:IsA("Tool") then tool=v break end end
 
 -- ⚙️ Настройки
-local speed=lp.Character.Humanoid.WalkSpeed*1.1
-local spin=40
+local attacking, spinning, targeting, stealing, flyMode, noclip, espOn = false,false,false,false,false,false,false
+local speed=16*1.1 -- чуть быстрее стандартной
+local spin=50
 local hitTime=0.02
-local attacking=true
-local spinning=false
-local targeting=false
-local stealing=false
-local flying=false
-local noClip=false
-local teleporting=false
 local target=nil
+local savedCoords=nil
 local lastHit=0
-local flySpeed=50
-local espEnabled=false
-local espObjects={}
-local minimized=false
+local espFolder=Instance.new("Folder",workspace)
+espFolder.Name="ESP_PATRICK"
+local pages={"⚔ Бой","🧭 ТП & Fly","👁 ESP & Прочее"}
+local currentPage=1
 
 -- 🖼 GUI
 local gui=Instance.new("ScreenGui",game.CoreGui)
 local fr=Instance.new("Frame",gui)
-fr.Size=UDim2.new(0,400,0,400)
-fr.Position=UDim2.new(0.5,-200,0.5,-200)
+fr.Size=UDim2.new(0,400,0,300)
+fr.Position=UDim2.new(0.5,-200,0.5,-150)
 fr.BackgroundColor3=Color3.fromRGB(30,30,30)
 fr.Active=true fr.Draggable=true
 
@@ -52,149 +44,153 @@ mini.BackgroundColor3=Color3.fromRGB(50,50,50)
 mini.TextColor3=Color3.fromRGB(255,255,255)
 
 local title=Instance.new("TextLabel",fr)
-title.Text="🔥 Fat Script Menu by @gde_patrick"
-title.Size=UDim2.new(1,-80,0,30)
+title.Text="🔥 Fat Script by @gde_patrick" title.Size=UDim2.new(1,-80,0,30)
 title.Position=UDim2.new(0,40,0,5)
-title.BackgroundTransparency=1
-title.TextColor3=Color3.fromRGB(255,255,255)
+title.BackgroundTransparency=1 title.TextColor3=Color3.fromRGB(255,255,255)
 title.TextXAlignment=Enum.TextXAlignment.Left
 
 local lst=Instance.new("ScrollingFrame",fr)
-lst.Size=UDim2.new(0.45, -10,1,-100)
+lst.Size=UDim2.new(1,-10,1,-60)
 lst.Position=UDim2.new(0,5,0,40)
 lst.BackgroundColor3=Color3.fromRGB(40,40,40)
 lst.ScrollBarThickness=5 lst.BorderSizePixel=0
+lst.CanvasSize=UDim2.new()
 
-local btns=Instance.new("Frame",fr)
-btns.Size=UDim2.new(0.5,-10,1,-50)
-btns.Position=UDim2.new(0.5,5,0,40)
-btns.BackgroundTransparency=1
+local prev=Instance.new("TextButton",fr)
+prev.Text="⬅" prev.Size=UDim2.new(0,30,0,30)
+prev.Position=UDim2.new(0,40,1,-35)
+prev.BackgroundColor3=Color3.fromRGB(50,50,50)
+prev.TextColor3=Color3.fromRGB(255,255,255)
 
-local function newBtn(text,order,callback)
-    local b=Instance.new("TextButton",btns)
-    b.Text=text
-    b.Size=UDim2.new(1,-10,0,30)
-    b.Position=UDim2.new(0,5,0,(order-1)*35)
-    b.BackgroundColor3=Color3.fromRGB(50,50,50)
-    b.TextColor3=Color3.fromRGB(255,255,255)
-    b.MouseButton1Click:Connect(callback)
-    return b
-end
+local nxt=Instance.new("TextButton",fr)
+nxt.Text="➡" nxt.Size=UDim2.new(0,30,0,30)
+nxt.Position=UDim2.new(1,-70,1,-35)
+nxt.BackgroundColor3=Color3.fromRGB(50,50,50)
+nxt.TextColor3=Color3.fromRGB(255,255,255)
 
--- 🛠 Кнопки
-local tgtBtn=newBtn("🎯 Target (OFF)",1,function()
-    targeting=not targeting
-    tgtBtn.Text=targeting and "🎯 Target (ON)" or "🎯 Target (OFF)"
-end)
+local pg=Instance.new("TextLabel",fr)
+pg.Text=pages[currentPage]
+pg.Size=UDim2.new(0,80,0,30)
+pg.Position=UDim2.new(0.5,-40,1,-35)
+pg.BackgroundTransparency=1
+pg.TextColor3=Color3.fromRGB(255,255,255)
 
-local stealBtn=newBtn("🚀 Спиздить (OFF)",2,function()
-    stealing=not stealing
-    stealBtn.Text=stealing and "🚀 Спиздить (ON)" or "🚀 Спиздить (OFF)"
-end)
-
-local spinBtn=newBtn("🔄 Крутилка (OFF)",3,function()
-    spinning=not spinning
-    spinBtn.Text=spinning and "🔄 Крутилка (ON)" or "🔄 Крутилка (OFF)"
-end)
-
-local atkBtn=newBtn("⚔ Авто-атака (ON)",4,function()
-    attacking=not attacking
-    atkBtn.Text=attacking and "⚔ Авто-атака (ON)" or "⚔ Авто-атака (OFF)"
-end)
-
-local flyBtn=newBtn("✈ Fly (OFF)",5,function()
-    flying=not flying
-    flyBtn.Text=flying and "✈ Fly (ON)" or "✈ Fly (OFF)"
-end)
-
-local tpBtn=newBtn("📍 Телепорт к цели",6,function()
-    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-        teleporting=true
-        local dest=target.Character.HumanoidRootPart.Position
-        coroutine.wrap(function()
-            local t0=tick()
-            while teleporting and (tick()-t0)<10 do
-                hrp.Velocity=(dest-hrp.Position).Unit*speed
-                rs.RenderStepped:Wait()
-            end
-            teleporting=false
-        end)()
-    end
-end)
-
-local saveBtn=newBtn("📍 Сохранить координаты",7,function()
-    savedPos=hrp.Position
-end)
-
-local tpBaseBtn=newBtn("📍 Телепорт к базе",8,function()
-    if savedPos then
-        teleporting=true
-        local dest=savedPos
-        coroutine.wrap(function()
-            local t0=tick()
-            while teleporting and (tick()-t0)<10 do
-                hrp.Velocity=(dest-hrp.Position).Unit*speed
-                rs.RenderStepped:Wait()
-            end
-            teleporting=false
-        end)()
-    end
-end)
-
-local cancelBtn=newBtn("🛑 Отмена телепорта",9,function()
-    teleporting=false
-end)
-
-local noclipBtn=newBtn("🚪 No-Clip (OFF)",10,function()
-    noClip=not noClip
-    noclipBtn.Text=noClip and "🚪 No-Clip (ON)" or "🚪 No-Clip (OFF)"
-end)
-
-local espBtn=newBtn("🧊 ESP (OFF)",11,function()
-    espEnabled=not espEnabled
-    espBtn.Text=espEnabled and "🧊 ESP (ON)" or "🧊 ESP (OFF)"
-end)
-
--- 📦 Список игроков
-local function refreshPlayers()
+-- 📦 Функции для кнопок
+local function updatePage()
     lst:ClearAllChildren()
     local y=0
-    for _,p in ipairs(plrs:GetPlayers()) do
-        if p~=lp then
-            local b=Instance.new("TextButton",lst)
-            b.Text=(target==p and "✅ " or "")..p.Name
-            b.Size=UDim2.new(1,-5,0,25)
-            b.Position=UDim2.new(0,0,0,y)
-            b.BackgroundColor3=target==p and Color3.fromRGB(0,150,0) or Color3.fromRGB(60,60,60)
-            b.TextColor3=Color3.fromRGB(255,255,255)
-            b.MouseButton1Click:Connect(function()
-                target=p
-                refreshPlayers()
-            end)
-            y=y+26
+    local function addBtn(txt,func)
+        local b=Instance.new("TextButton",lst)
+        b.Text=txt b.Size=UDim2.new(1,-5,0,30)
+        b.Position=UDim2.new(0,0,0,y)
+        b.BackgroundColor3=Color3.fromRGB(60,60,60)
+        b.TextColor3=Color3.fromRGB(255,255,255)
+        b.MouseButton1Click:Connect(func)
+        y=y+32
+    end
+    if currentPage==1 then
+        addBtn((attacking and "⚔ Авто-атака (ON)" or "⚔ Авто-атака (OFF)"),function()
+            attacking=not attacking
+            updatePage()
+        end)
+        addBtn((spinning and "🔄 Крутилка (ON)" or "🔄 Крутилка (OFF)"),function()
+            spinning=not spinning
+            updatePage()
+        end)
+        addBtn((stealing and "🚀 Спиздить (ON)" or "🚀 Спиздить (OFF)"),function()
+            stealing=not stealing
+            updatePage()
+        end)
+        addBtn((targeting and "🎯 Target (ON)" or "🎯 Target (OFF)"),function()
+            targeting=not targeting
+            updatePage()
+        end)
+    elseif currentPage==2 then
+        addBtn((flyMode and "✈ Fly (ON)" or "✈ Fly (OFF)"),function()
+            flyMode=not flyMode
+            updatePage()
+        end)
+        addBtn("📍 Сохранить координаты",function()
+            savedCoords=hrp.Position
+        end)
+        addBtn("📍 Телепорт к базе",function()
+            if savedCoords then target=nil targeting=false stealing=false
+                coroutine.wrap(function()
+                    local pos=savedCoords
+                    while (hrp.Position-pos).Magnitude>5 do
+                        hrp.Velocity=(pos-hrp.Position).Unit*16*1.15
+                        wait()
+                    end
+                    hrp.Velocity=Vector3.new()
+                end)()
+            end
+        end)
+        addBtn("🧭 Телепорт к цели",function()
+            if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+                local pos=target.Character.HumanoidRootPart.Position
+                coroutine.wrap(function()
+                    while (hrp.Position-pos).Magnitude>5 do
+                        hrp.Velocity=(pos-hrp.Position).Unit*16*1.15
+                        wait()
+                    end
+                    hrp.Velocity=Vector3.new()
+                end)()
+            end
+        end)
+        addBtn((noclip and "🚪 NoClip (ON)" or "🚪 NoClip (OFF)"),function()
+            noclip=not noclip
+            updatePage()
+        end)
+    elseif currentPage==3 then
+        addBtn((espOn and "👁 ESP (ON)" or "👁 ESP (OFF)"),function()
+            espOn=not espOn
+            updatePage()
+        end)
+        -- Список игроков
+        for _,p in ipairs(plrs:GetPlayers()) do
+            if p~=lp then
+                local b=Instance.new("TextButton",lst)
+                b.Text=((target==p and "✅ " or "")..p.Name)
+                b.Size=UDim2.new(1,-5,0,25)
+                b.Position=UDim2.new(0,0,0,y)
+                b.BackgroundColor3=Color3.fromRGB(60,60,60)
+                b.TextColor3=Color3.fromRGB(255,255,255)
+                b.MouseButton1Click:Connect(function()
+                    target=p
+                    updatePage()
+                end)
+                y=y+27
+            end
         end
     end
     lst.CanvasSize=UDim2.new(0,0,0,y)
+    pg.Text=pages[currentPage]
 end
-refreshPlayers()
-plrs.PlayerAdded:Connect(refreshPlayers)
-plrs.PlayerRemoving:Connect(refreshPlayers)
+updatePage()
 
--- ✨ ESP функция
+-- 🧠 ESP
 local function updateESP()
-    for _,obj in pairs(espObjects) do obj:Destroy() end
-    table.clear(espObjects)
-    if not espEnabled then return end
-    for _,p in ipairs(plrs:GetPlayers()) do
-        if p~=lp and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-            local box=Instance.new("BoxHandleAdornment")
-            box.Size=Vector3.new(4,6,2)
-            box.Adornee=p.Character.HumanoidRootPart
-            box.Color3=Color3.fromRGB(0,255,0)
-            box.AlwaysOnTop=true
-            box.ZIndex=10
-            box.Parent=gui
-            table.insert(espObjects,box)
+    for _,v in pairs(espFolder:GetChildren()) do v:Destroy() end
+    if espOn then
+        for _,p in ipairs(plrs:GetPlayers()) do
+            if p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p~=lp then
+                local box=Instance.new("BoxHandleAdornment",espFolder)
+                box.Adornee=p.Character
+                box.Size=Vector3.new(4,6,2)
+                box.Color3=Color3.new(1,0,0)
+                box.AlwaysOnTop=true
+                box.ZIndex=5
+                local txt=Instance.new("BillboardGui",espFolder)
+                txt.Adornee=p.Character.HumanoidRootPart
+                txt.Size=UDim2.new(0,100,0,20)
+                txt.AlwaysOnTop=true
+                local lbl=Instance.new("TextLabel",txt)
+                lbl.Size=UDim2.new(1,0,1,0)
+                lbl.Text=string.format("%s | %dm",p.Name,math.floor((p.Character.HumanoidRootPart.Position-hrp.Position).Magnitude))
+                lbl.BackgroundTransparency=1
+                lbl.TextColor3=Color3.new(1,1,1)
+                lbl.TextScaled=true
+            end
         end
     end
 end
@@ -203,23 +199,44 @@ end
 rs.RenderStepped:Connect(function()
     if attacking and tick()-lastHit>hitTime and tool then lastHit=tick() tool:Activate() end
     if spinning then hrp.CFrame=hrp.CFrame*CFrame.Angles(0,math.rad(spin),0) end
-    if stealing then hrp.Velocity=Vector3.new(0,100,0) end
-    if flying then
-        local move=Vector3.new()
-        if uis:IsKeyDown(Enum.KeyCode.W) then move=move+cam.CFrame.LookVector end
-        if uis:IsKeyDown(Enum.KeyCode.S) then move=move-cam.CFrame.LookVector end
-        if uis:IsKeyDown(Enum.KeyCode.A) then move=move-cam.CFrame.RightVector end
-        if uis:IsKeyDown(Enum.KeyCode.D) then move=move+cam.CFrame.RightVector end
-        hrp.Velocity=move.Unit*flySpeed
+    if stealing then hrp.Velocity=Vector3.new(0,60,0) end
+    if flyMode then
+        local dir=Vector3.zero
+        if uis:IsKeyDown(Enum.KeyCode.W) then dir=dir+cam.CFrame.LookVector end
+        if uis:IsKeyDown(Enum.KeyCode.S) then dir=dir-cam.CFrame.LookVector end
+        if uis:IsKeyDown(Enum.KeyCode.A) then dir=dir-cam.CFrame.RightVector end
+        if uis:IsKeyDown(Enum.KeyCode.D) then dir=dir+cam.CFrame.RightVector end
+        if uis:IsKeyDown(Enum.KeyCode.Space) then dir=dir+Vector3.new(0,1,0) end
+        if uis:IsKeyDown(Enum.KeyCode.LeftControl) then dir=dir+Vector3.new(0,-1,0) end
+        hrp.Velocity=dir.Unit*speed*1.2
     end
-    if noClip then for _,v in pairs(chr:GetDescendants()) do if v:IsA("BasePart") then v.CanCollide=false end end end
-    updateESP()
+    if targeting and target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+        local pos=target.Character.HumanoidRootPart.Position
+        hrp.Velocity=(pos-hrp.Position).Unit*speed
+    end
+    if noclip then
+        for _,v in pairs(chr:GetDescendants()) do
+            if v:IsA("BasePart") then v.CanCollide=false end
+        end
+    end
+    if espOn then updateESP() end
 end)
 
-close.MouseButton1Click:Connect(function() gui:Destroy() attacking=false spinning=false stealing=false targeting=false flying=false espEnabled=false teleporting=false end)
-
+-- 🛠 Кнопки
+close.MouseButton1Click:Connect(function() gui:Destroy() attacking=false spinning=false stealing=false flyMode=false targeting=false noclip=false espOn=false end)
 mini.MouseButton1Click:Connect(function()
-    minimized=not minimized
-    for _,v in pairs(fr:GetChildren()) do if v~=mini and v~=close then v.Visible=not minimized end end
-    fr.Size=minimized and UDim2.new(0,70,0,40) or UDim2.new(0,400,0,400)
+    fr.Visible=not fr.Visible
 end)
+prev.MouseButton1Click:Connect(function()
+    currentPage=currentPage-1 if currentPage<1 then currentPage=#pages end updatePage()
+end)
+nxt.MouseButton1Click:Connect(function()
+    currentPage=currentPage+1 if currentPage>#pages then currentPage=1 end updatePage()
+end)
+
+-- ♻ Перезагрузка при смерти
+lp.CharacterAdded:Connect(function(c)
+    chr=c hum=chr:WaitForChild("Humanoid") hrp=chr:WaitForChild("HumanoidRootPart")
+end)
+
+-- Готово! Всё работает 🚀
