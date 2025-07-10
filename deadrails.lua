@@ -1,101 +1,97 @@
--- made by chatgpt special for Delta X
-local ScreenGui = Instance.new("ScreenGui")
-local Frame = Instance.new("Frame")
-local Toggle = Instance.new("TextButton")
-local SpeedLabel = Instance.new("TextLabel")
-local SpeedSlider = Instance.new("TextBox")
+local player = game.Players.LocalPlayer
+local cam = workspace.CurrentCamera
+local uis = game:GetService("UserInputService")
+local rs = game:GetService("RunService")
 
-ScreenGui.Parent = game.CoreGui
-ScreenGui.Name = "FreeCamGUI"
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.Name = "FreecamGUI"
 
-Frame.Size = UDim2.new(0, 200, 0, 100)
-Frame.Position = UDim2.new(0, 100, 0, 100)
-Frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-Frame.Active = true
-Frame.Draggable = true
-Frame.Parent = ScreenGui
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 200, 0, 120)
+frame.Position = UDim2.new(0.5, -100, 0.3, 0)
+frame.BackgroundColor3 = Color3.fromRGB(40,40,40)
+frame.Active = true
+frame.Draggable = true
 
-Toggle.Size = UDim2.new(0, 180, 0, 30)
-Toggle.Position = UDim2.new(0, 10, 0, 10)
-Toggle.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-Toggle.Text = "Freecam: OFF"
-Toggle.Parent = Frame
+local onOffBtn = Instance.new("TextButton", frame)
+onOffBtn.Size = UDim2.new(0.8, 0, 0, 40)
+onOffBtn.Position = UDim2.new(0.1,0,0.2,0)
+onOffBtn.Text = "Freecam: OFF"
 
-SpeedLabel.Size = UDim2.new(0, 60, 0, 20)
-SpeedLabel.Position = UDim2.new(0, 10, 0, 50)
-SpeedLabel.BackgroundTransparency = 1
-SpeedLabel.TextColor3 = Color3.fromRGB(255,255,255)
-SpeedLabel.Text = "Speed:"
-SpeedLabel.Parent = Frame
+local closeBtn = Instance.new("TextButton", frame)
+closeBtn.Size = UDim2.new(0.2, 0, 0, 30)
+closeBtn.Position = UDim2.new(0.8,0,0,0)
+closeBtn.Text = "✖"
 
-SpeedSlider.Size = UDim2.new(0, 100, 0, 20)
-SpeedSlider.Position = UDim2.new(0, 70, 0, 50)
-SpeedSlider.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-SpeedSlider.Text = "1"
-SpeedSlider.Parent = Frame
+local flying = false
+local speed = 2
+local moveDir = Vector3.new()
 
--- freecam logic
-local freecamEnabled = false
-local speed = 1
-
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local camera = workspace.CurrentCamera
-
-local camCF = camera.CFrame
-
-local function updateFreecam()
-    if freecamEnabled then
-        camera.CameraType = Enum.CameraType.Scriptable
-        camera.CFrame = camCF
-    else
-        camera.CameraType = Enum.CameraType.Custom
-    end
+-- Функция старта
+local function startFreecam()
+	flying = true
+	onOffBtn.Text = "Freecam: ON"
+	cam.CameraType = Enum.CameraType.Scriptable
+	if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+		cam.CFrame = player.Character.HumanoidRootPart.CFrame
+	end
 end
 
-Toggle.MouseButton1Click:Connect(function()
-    freecamEnabled = not freecamEnabled
-    Toggle.Text = freecamEnabled and "Freecam: ON" or "Freecam: OFF"
-    updateFreecam()
-end)
-
-SpeedSlider.FocusLost:Connect(function()
-    local value = tonumber(SpeedSlider.Text)
-    if value then
-        speed = value
-    else
-        SpeedSlider.Text = tostring(speed)
-    end
-end)
-
-local moveVector = Vector3.new()
-local function getInput()
-    local move = Vector3.new()
-    if UserInputService:IsKeyDown(Enum.KeyCode.W) then move = move + Vector3.new(0,0,-1) end
-    if UserInputService:IsKeyDown(Enum.KeyCode.S) then move = move + Vector3.new(0,0,1) end
-    if UserInputService:IsKeyDown(Enum.KeyCode.A) then move = move + Vector3.new(-1,0,0) end
-    if UserInputService:IsKeyDown(Enum.KeyCode.D) then move = move + Vector3.new(1,0,0) end
-    if UserInputService:IsKeyDown(Enum.KeyCode.E) then move = move + Vector3.new(0,1,0) end
-    if UserInputService:IsKeyDown(Enum.KeyCode.Q) then move = move + Vector3.new(0,-1,0) end
-    return move
+-- Стоп
+local function stopFreecam()
+	flying = false
+	onOffBtn.Text = "Freecam: OFF"
+	cam.CameraType = Enum.CameraType.Custom
 end
 
-UserInputService.InputChanged:Connect(function(input)
-    if freecamEnabled and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Delta
-        local rot = CFrame.Angles(0, -delta.X*0.002, 0) * CFrame.Angles(-delta.Y*0.002, 0, 0)
-        camCF = rot * camCF
-    end
+onOffBtn.MouseButton1Click:Connect(function()
+	if flying then
+		stopFreecam()
+	else
+		startFreecam()
+	end
 end)
 
-RunService.RenderStepped:Connect(function(dt)
-    if freecamEnabled then
-        local move = getInput()
-        camCF = camCF + camCF.LookVector * move.Z * speed * dt
-        camCF = camCF + camCF.RightVector * move.X * speed * dt
-        camCF = camCF + camCF.UpVector * move.Y * speed * dt
-        camera.CFrame = camCF
-    end
+closeBtn.MouseButton1Click:Connect(function()
+	gui.Enabled = false
 end)
 
-print("✅ Freecam loaded!")
+-- Движение
+local keys = {}
+uis.InputBegan:Connect(function(input, gpe)
+	if not gpe then
+		keys[input.KeyCode] = true
+	end
+end)
+uis.InputEnded:Connect(function(input, gpe)
+	if not gpe then
+		keys[input.KeyCode] = false
+	end
+end)
+
+-- Обновление камеры
+rs.RenderStepped:Connect(function(dt)
+	if flying then
+		local move = Vector3.new()
+		if keys[Enum.KeyCode.W] then move = move + Vector3.new(0,0,-1) end
+		if keys[Enum.KeyCode.S] then move = move + Vector3.new(0,0,1) end
+		if keys[Enum.KeyCode.A] then move = move + Vector3.new(-1,0,0) end
+		if keys[Enum.KeyCode.D] then move = move + Vector3.new(1,0,0) end
+		if keys[Enum.KeyCode.E] then move = move + Vector3.new(0,1,0) end
+		if keys[Enum.KeyCode.Q] then move = move + Vector3.new(0,-1,0) end
+		
+		if move.Magnitude > 0 then
+			cam.CFrame = cam.CFrame * CFrame.new(move * speed * dt * 20)
+		end
+	end
+end)
+
+-- После возрождения
+player.CharacterAdded:Connect(function()
+	if flying then
+		wait(1)
+		if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+			cam.CFrame = player.Character.HumanoidRootPart.CFrame
+		end
+	end
+end)
