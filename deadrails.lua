@@ -1,16 +1,14 @@
 -- Настройки
 local speed = 25
 local jumpPower = 45
-local spinSpeed = 12
-local hitRate = 0.01
+local spinSpeed = 50 -- быстрее спин
+local hitRate = 0.01 -- быстрее удары
 local attackDistance = 3
-local upTime = 0.4 -- время полета вверх при обходе
 local targetPart = "HumanoidRootPart"
 
 local plrs = game:GetService("Players")
 local lp = plrs.LocalPlayer
 local rs = game:GetService("RunService")
-local uis = game:GetService("UserInputService")
 
 local active = true
 local minimized = false
@@ -46,12 +44,13 @@ mini.Position = UDim2.new(1,-50,0,5)
 mini.Text = "🌟"
 mini.BackgroundColor3 = Color3.fromRGB(60,60,180)
 
-local plist = Instance.new("Frame", frame)
+local plist = Instance.new("ScrollingFrame", frame)
 plist.Size = UDim2.new(0,200,0,220)
 plist.Position = UDim2.new(0,10,0,60)
 plist.BackgroundColor3 = Color3.fromRGB(50,50,50)
+plist.CanvasSize = UDim2.new(0,0,0,0)
 
--- Функция для создания кнопки игрока
+-- Функция создания кнопки игрока
 local function makeBtn(name)
     local b = Instance.new("TextButton", plist)
     b.Size = UDim2.new(1,0,0,25)
@@ -72,16 +71,17 @@ local function makeBtn(name)
     end)
 end
 
--- Обновляем список игроков
-local function updatePlist()
-    for _,c in pairs(plist:GetChildren()) do if c:IsA("TextButton") then c:Destroy() end end
-    for _,p in pairs(plrs:GetPlayers()) do
-        if p~=lp then makeBtn(p.Name) end
+-- Обновление списка игроков часто
+spawn(function()
+    while true do
+        plist:ClearAllChildren()
+        for _,p in pairs(plrs:GetPlayers()) do
+            if p~=lp then makeBtn(p.Name) end
+        end
+        plist.CanvasSize=UDim2.new(0,0,0,#plist:GetChildren()*25)
+        wait(1)
     end
-end
-plrs.PlayerAdded:Connect(updatePlist)
-plrs.PlayerRemoving:Connect(updatePlist)
-updatePlist()
+end)
 
 -- Кнопки
 onoff.MouseButton1Click:Connect(function()
@@ -102,7 +102,7 @@ lp.CharacterAdded:Connect(function(char)
     char:WaitForChild("Humanoid").JumpPower=jumpPower
 end)
 
--- Удар
+-- Быстрый удар
 local function attack()
     if tick()-lastHit>=hitRate then
         mouse1click()
@@ -110,14 +110,7 @@ local function attack()
     end
 end
 
--- Обход базы
-local function avoidBase(myHRP)
-    myHRP.Velocity=Vector3.new(0,60,0)
-    wait(upTime)
-    myHRP.Velocity=lp.Character.Humanoid.MoveDirection*speed
-end
-
--- Спин
+-- Быстрый спин
 local function spin()
     local c=lp.Character
     if c and c:FindFirstChild(targetPart) then
@@ -148,9 +141,7 @@ rs.RenderStepped:Connect(function()
             local d=(myHRP.Position-t.Position).Magnitude
             if d>attackDistance then
                 local dir=(t.Position-myHRP.Position).Unit
-                local move=dir*speed
-                myHRP.Velocity=move
-                if hum.MoveDirection.Magnitude==0 then avoidBase(myHRP) end
+                myHRP.Velocity=dir*speed
             else attack() end
         end
         spin()
