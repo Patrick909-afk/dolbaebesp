@@ -1,23 +1,30 @@
---[[🔥 By @gde_patrick 😎]]
-local plrs = game:GetService("Players")
-local lp = plrs.LocalPlayer
-local chr = lp.Character or lp.CharacterAdded:Wait()
-local hum = chr:WaitForChild("Humanoid")
-local hrp = chr:WaitForChild("HumanoidRootPart")
-local rs = game:GetService("RunService")
-local tool = nil
+-- [[🔥 Fat Script by You 😎]]
+local plrs=game:GetService("Players")
+local lp=plrs.LocalPlayer
+local chr=lp.Character or lp.CharacterAdded:Wait()
+local hum=chr:WaitForChild("Humanoid")
+local hrp=chr:WaitForChild("HumanoidRootPart")
+local rs=game:GetService("RunService")
+local uis=game:GetService("UserInputService")
+local tool=nil
 for _,v in ipairs(lp.Backpack:GetChildren()) do if v:IsA("Tool") then tool=v break end end
 
---[[⚙️ Настройки]]
-local speed=30
+-- ⚙️ Настройки
+local speed=60 -- скорость больше чем у других
 local spin=40
-local hitTime=0.05
+local hitTime=0.02
 local jump=45
-local attacking, spinning, targeting, minimized=false,false,false,false
+local attacking=true
+local spinning=true
+local targeting=false
+local minimized=false
+local stealing=false
 local target=nil
 local lastHit=0
+local lastPos=hrp.Position
+local stuckTime=0
 
---[[🖼 GUI]]
+-- 🖼 GUI
 local gui=Instance.new("ScreenGui",game.CoreGui)
 local fr=Instance.new("Frame",gui)
 fr.Size=UDim2.new(0,240,0,360)
@@ -63,7 +70,7 @@ steal.Position=UDim2.new(0,5,1,-20)
 steal.BackgroundColor3=Color3.fromRGB(50,50,50)
 steal.TextColor3=Color3.fromRGB(255,255,255)
 
---[[📦 Функция обновы списка]]
+-- 📦 Функция обновы списка
 local function refresh()
     lst:ClearAllChildren()
     local y=0
@@ -88,19 +95,30 @@ refresh()
 plrs.PlayerAdded:Connect(refresh)
 plrs.PlayerRemoving:Connect(refresh)
 
---[[🚀 Логика]]
+-- 🚀 Логика
 rs.RenderStepped:Connect(function()
+    -- Автоудары (реально кликает)
+    if attacking and tick()-lastHit>hitTime and tool then
+        lastHit=tick()
+        tool:Activate()
+    end
+    -- Крутилка
+    if spinning then hrp.CFrame=hrp.CFrame*CFrame.Angles(0,math.rad(spin),0) end
+    -- Полёт вверх при "спиздить"
+    if stealing then hrp.Velocity=Vector3.new(0,100,0) end
+    -- Таргетинг
     if targeting and target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
         local pos=target.Character.HumanoidRootPart.Position
         hrp.Velocity=(pos-hrp.Position).Unit*speed
     end
-    if spinning then hrp.CFrame=hrp.CFrame*CFrame.Angles(0,math.rad(spin),0) end
-    if attacking and tick()-lastHit>hitTime and tool then
-        lastHit=tick() tool:Activate()
-    end
+    -- Автопрыжок если застрял
+    local moved=(hrp.Position-lastPos).Magnitude
+    if moved<0.5 then stuckTime=stuckTime+rs.RenderStepped:Wait() else stuckTime=0 end
+    if stuckTime>0.7 then hum.Jump=true stuckTime=0 end
+    lastPos=hrp.Position
 end)
 
---[[🛠 Кнопки]]
+-- 🛠 Кнопки
 close.MouseButton1Click:Connect(function() gui:Destroy() end)
 
 mini.MouseButton1Click:Connect(function()
@@ -124,8 +142,6 @@ end)
 steal.MouseButton1Click:Connect(function()
     stealing=not stealing
     steal.Text=stealing and "🚀 Спиздить (ON)" or "🚀 Спиздить (OFF)"
-    if stealing then hrp.Velocity=Vector3.new(0,150,0) else hrp.Velocity=Vector3.zero end
 end)
 
---[[🔥 Старт]]
-attacking=true spinning=true
+--🔥 Старт
