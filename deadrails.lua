@@ -1,161 +1,136 @@
--- // НАСТРОЙКИ //
-local speed = 80 -- скорость
-local jumpPower = 90
-local flightTime = 5 -- секунд облёта если упёрся
+-- Настройки
+local speed = 26
+local jumpPower = 45
+local spinSpeed = 50
+local hitRate = 0.01
+local attackDistance = 3
+local targetPart = "HumanoidRootPart"
 
-local Players = game:GetService("Players")
-local lp = Players.LocalPlayer
-local char = lp.Character or lp.CharacterAdded:Wait()
-local hrp = char:WaitForChild("HumanoidRootPart")
-local hum = char:WaitForChild("Humanoid")
-local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
+local plrs = game:GetService("Players")
+local lp = plrs.LocalPlayer
+local rs = game:GetService("RunService")
+local mouse = lp:GetMouse()
 
-local toggled = false
-local gui -- потом создадим
+local active = true
+local minimized = false
 
--- // GUI //
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Parent = game.CoreGui
-ScreenGui.ResetOnSpawn = false
+-- GUI
+local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.ResetOnSpawn = false
 
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0,200,0,300)
-frame.Position = UDim2.new(0.1,0,0.1,0)
-frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0,220,0,300)
+frame.Position = UDim2.new(0,100,0,100)
+frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
 frame.Active = true
 frame.Draggable = true
-frame.Parent = ScreenGui
 
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1,0,0,30)
-title.Text = "🌟 BangBot"
-title.TextColor3 = Color3.new(1,1,1)
-title.BackgroundTransparency = 1
-title.Parent = frame
+local onoff = Instance.new("TextButton", frame)
+onoff.Size = UDim2.new(0,200,0,40)
+onoff.Position = UDim2.new(0,10,0,10)
+onoff.Text = "✅ ВКЛ"
+onoff.BackgroundColor3 = Color3.fromRGB(60,180,60)
 
-local toggle = Instance.new("TextButton")
-toggle.Size = UDim2.new(1,0,0,30)
-toggle.Position = UDim2.new(0,0,0,40)
-toggle.Text = "ON"
-toggle.TextColor3 = Color3.new(0,1,0)
-toggle.BackgroundTransparency = 0.2
-toggle.Parent = frame
-
-local playerList = Instance.new("ScrollingFrame")
-playerList.Size = UDim2.new(1,0,0,200)
-playerList.Position = UDim2.new(0,0,0,80)
-playerList.CanvasSize = UDim2.new(0,0,0,0)
-playerList.BackgroundTransparency = 0.3
-playerList.Parent = frame
-
-local close = Instance.new("TextButton")
-close.Size = UDim2.new(0,30,0,30)
-close.Position = UDim2.new(1,-30,0,0)
+local close = Instance.new("TextButton", frame)
+close.Size = UDim2.new(0,20,0,20)
+close.Position = UDim2.new(1,-25,0,5)
 close.Text = "✖"
-close.Parent = frame
+close.BackgroundColor3 = Color3.fromRGB(180,60,60)
 
-local minimized = false
-local mini = Instance.new("TextButton")
-mini.Size = UDim2.new(0,30,0,30)
-mini.Position = UDim2.new(1,-60,0,0)
+local mini = Instance.new("TextButton", frame)
+mini.Size = UDim2.new(0,20,0,20)
+mini.Position = UDim2.new(1,-50,0,5)
 mini.Text = "🌟"
-mini.Parent = frame
+mini.BackgroundColor3 = Color3.fromRGB(60,60,180)
 
--- // Обработка //
-toggle.MouseButton1Click:Connect(function()
-    toggled = not toggled
-    toggle.Text = toggled and "OFF" or "ON"
-    toggle.TextColor3 = toggled and Color3.new(1,0,0) or Color3.new(0,1,0)
+local plist = Instance.new("TextLabel", frame)
+plist.Size = UDim2.new(0,200,0,200)
+plist.Position = UDim2.new(0,10,0,60)
+plist.BackgroundColor3 = Color3.fromRGB(50,50,50)
+plist.TextColor3 = Color3.new(1,1,1)
+plist.TextWrapped = true
+plist.TextYAlignment = Enum.TextYAlignment.Top
+plist.Text = "Игроки..."
+
+-- Кнопки
+onoff.MouseButton1Click:Connect(function()
+    active = not active
+    onoff.Text = active and "✅ ВКЛ" or "❌ ВЫКЛ"
+    onoff.BackgroundColor3 = active and Color3.fromRGB(60,180,60) or Color3.fromRGB(180,60,60)
 end)
 
-close.MouseButton1Click:Connect(function()
-    ScreenGui:Destroy()
-end)
-
+close.MouseButton1Click:Connect(function() gui:Destroy() end)
 mini.MouseButton1Click:Connect(function()
     minimized = not minimized
-    for _,child in ipairs(frame:GetChildren()) do
-        if child ~= title and child ~= mini and child ~= close then
-            child.Visible = not minimized
-        end
-    end
-    frame.Size = minimized and UDim2.new(0,80,0,30) or UDim2.new(0,200,0,300)
+    plist.Visible = not minimized
+    onoff.Visible = not minimized
 end)
 
--- // Обновляем список игроков //
-local function updateList()
-    playerList:ClearAllChildren()
-    local y = 0
-    for _,p in ipairs(Players:GetPlayers()) do
-        if p ~= lp then
-            local lbl = Instance.new("TextLabel")
-            lbl.Size = UDim2.new(1,0,0,20)
-            lbl.Position = UDim2.new(0,0,0,y)
-            lbl.Text = p.Name
-            lbl.TextColor3 = Color3.new(1,1,1)
-            lbl.BackgroundTransparency = 1
-            lbl.Parent = playerList
-            y = y + 20
-        end
+-- Список игроков
+local function updatePlist()
+    local text = ""
+    for _,p in pairs(plrs:GetPlayers()) do
+        if p ~= lp then text = text..p.Name.."\n" end
     end
-    playerList.CanvasSize = UDim2.new(0,0,0,y)
+    plist.Text = text == "" and "Нет других игроков" or text
 end
-Players.PlayerAdded:Connect(updateList)
-Players.PlayerRemoving:Connect(updateList)
-updateList()
+plrs.PlayerAdded:Connect(updatePlist)
+plrs.PlayerRemoving:Connect(updatePlist)
+updatePlist()
 
--- // Анти‑фолл //
-RunService.RenderStepped:Connect(function()
-    if hum.FloorMaterial == Enum.Material.Air then
-        hrp.Velocity = Vector3.new(0,2,0)
+-- Удар
+local lastHit = 0
+local function attack()
+    if tick()-lastHit>=hitRate then
+        mouse1click()
+        lastHit=tick()
     end
-end)
+end
 
--- // Анти‑стоп //
-hum.PlatformStand = false
-hum.Seated:Connect(function(active)
-    if active then hum.Sit = false end
-end)
-
--- // Логика бота //
-spawn(function()
-    while true do
-        if toggled then
-            hum.WalkSpeed = speed
-            hum.JumpPower = jumpPower
-
-            -- Найдём ближайшего врага
-            local closest,dist
-            for _,p in ipairs(Players:GetPlayers()) do
-                if p~=lp and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                    local d = (p.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
-                    if not dist or d<dist then
-                        closest=p
-                        dist=d
-                    end
-                end
-            end
-
-            if closest and closest.Character then
-                local dir = (closest.Character.HumanoidRootPart.Position - hrp.Position).Unit
-                hrp.Velocity = dir * speed
-
-                -- Проверим, упёрся ли в стену
-                local ray = Ray.new(hrp.Position, hrp.CFrame.LookVector * 3)
-                local part,pos = workspace:FindPartOnRay(ray, char)
-                if part then
-                    -- Откат назад
-                    hrp.CFrame = hrp.CFrame - hrp.CFrame.LookVector * 5
-                    wait(1)
-                    -- Взлет вверх и вперёд
-                    local goal = hrp.Position + Vector3.new(0,15,0) + dir*20
-                    local tween = TweenService:Create(hrp, TweenInfo.new(flightTime), {CFrame = CFrame.new(goal)})
-                    tween:Play()
-                    tween.Completed:Wait()
-                end
+-- Ближайший враг
+local function getTarget()
+    local closest,dist
+    local myHRP = lp.Character and lp.Character:FindFirstChild(targetPart)
+    if not myHRP then return end
+    for _,p in pairs(plrs:GetPlayers()) do
+        if p~=lp and p.Character and p.Character:FindFirstChild(targetPart) then
+            local mag = (myHRP.Position-p.Character[targetPart].Position).Magnitude
+            if not dist or mag<dist then
+                closest=p.Character[targetPart]
+                dist=mag
             end
         end
-        wait(0.1)
+    end
+    return closest
+end
+
+-- Спин
+local function spin()
+    local c = lp.Character
+    if c and c:FindFirstChild(targetPart) then
+        c[targetPart].CFrame = c[targetPart].CFrame*CFrame.Angles(0,math.rad(spinSpeed),0)
+    end
+end
+
+-- Перезапуск
+lp.CharacterAdded:Connect(function(char)
+    char:WaitForChild("Humanoid").JumpPower=jumpPower
+end)
+
+-- Основной цикл
+rs.RenderStepped:Connect(function()
+    if not active or not lp.Character or not lp.Character:FindFirstChild("Humanoid") then return end
+    local hum=lp.Character:FindFirstChildOfClass("Humanoid")
+    if hum and hum.Health>0 then
+        local t=getTarget()
+        local myHRP=lp.Character:FindFirstChild(targetPart)
+        if t and myHRP then
+            local d=(myHRP.Position-t.Position).Magnitude
+            if d>attackDistance then
+                local dir=(t.Position-myHRP.Position).Unit
+                myHRP.Velocity=dir*speed
+            else attack() end
+        end
+        spin()
     end
 end)
