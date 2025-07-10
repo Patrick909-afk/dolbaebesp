@@ -11,7 +11,7 @@ for _,v in ipairs(lp.Backpack:GetChildren()) do
 end
 
 -- ⚙️ Настройки
-local speed = hum.WalkSpeed * 1.1
+local speed = hum.WalkSpeed * 1.2
 local spin = 40
 local hitTime = 0.02
 local attacking = true
@@ -101,17 +101,19 @@ rs.RenderStepped:Connect(function()
     if attacking and tick()-lastHit>hitTime and tool then
         lastHit=tick()
         tool:Activate()
-        -- Сильно отбрасываем цель
-        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-            target.Character.HumanoidRootPart.Velocity = Vector3.new(999,999,999)
+        -- Другие игроки отлетают
+        for _,p in ipairs(plrs:GetPlayers()) do
+            if p~=lp and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                p.Character.HumanoidRootPart.Velocity = Vector3.new(300,300,300)
+            end
         end
     end
     -- Крутилка
     if spinning then hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(spin), 0) end
-    -- "Спиздить": летим вверх лёжа
+    -- "Спиздить": аккуратно парим сверху лицом вниз
     if stealing then
-        hrp.Velocity = Vector3.new(0,100,0)
-        hrp.CFrame = hrp.CFrame * CFrame.Angles(math.rad(90),0,0)
+        hrp.Velocity = Vector3.new(0,50,0) -- медленнее вверх, не бьёмся об потолок
+        hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(math.rad(90),0,0)
     end
     -- Таргетинг
     if targeting and target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
