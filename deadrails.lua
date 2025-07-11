@@ -1,78 +1,115 @@
--- 🌟 Skin Changer by @gde_patrick
-
+-- [[ 🔥 Visual Skin Changer by @gde_patrick ]]
 local plrs = game:GetService("Players")
 local lp = plrs.LocalPlayer
-local chr = lp.Character or lp.CharacterAdded:Wait()
-local originalShirt, originalPants
+local char = lp.Character or lp.CharacterAdded:Wait()
+
+local myAccessories = {}  -- Сохраним твои старые аксессуары
+local currentAdded = nil
 
 -- 🖼 GUI
 local gui = Instance.new("ScreenGui", game.CoreGui)
-local fr = Instance.new("Frame", gui)
-fr.Size = UDim2.new(0, 250, 0, 120)
-fr.Position = UDim2.new(0.5, -125, 0.5, -60)
-fr.BackgroundColor3 = Color3.fromRGB(30,30,30)
-fr.Active = true
-fr.Draggable = true
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 300, 0, 100)
+frame.Position = UDim2.new(0.5, -150, 0.5, -50)
+frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+frame.Active = true frame.Draggable = true
 
-local txt = Instance.new("TextBox", fr)
-txt.PlaceholderText = "Введи ID скина"
-txt.Size = UDim2.new(1,-10,0,30)
-txt.Position = UDim2.new(0,5,0,5)
-txt.BackgroundColor3 = Color3.fromRGB(50,50,50)
-txt.TextColor3 = Color3.fromRGB(255,255,255)
+local input = Instance.new("TextBox", frame)
+input.PlaceholderText = "ID скина или аксессуара"
+input.Size = UDim2.new(0.6, -10, 0, 30)
+input.Position = UDim2.new(0,5,0,5)
+input.BackgroundColor3 = Color3.fromRGB(50,50,50)
+input.TextColor3 = Color3.fromRGB(255,255,255)
 
-local ok = Instance.new("TextButton", fr)
-ok.Text = "✅ OK"
-ok.Size = UDim2.new(0.5,-7,0,30)
-ok.Position = UDim2.new(0,5,0,40)
-ok.BackgroundColor3 = Color3.fromRGB(50,50,50)
-ok.TextColor3 = Color3.fromRGB(255,255,255)
+local okBtn = Instance.new("TextButton", frame)
+okBtn.Text = "✅ OK"
+okBtn.Size = UDim2.new(0.4, -10, 0, 30)
+okBtn.Position = UDim2.new(0.6,5,0,5)
+okBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+okBtn.TextColor3 = Color3.fromRGB(255,255,255)
 
-local revert = Instance.new("TextButton", fr)
-revert.Text = "🔙 Вернуть"
-revert.Size = UDim2.new(0.5,-7,0,30)
-revert.Position = UDim2.new(0.5+0.02,0,0,40)
-revert.BackgroundColor3 = Color3.fromRGB(50,50,50)
-revert.TextColor3 = Color3.fromRGB(255,255,255)
+local revertBtn = Instance.new("TextButton", frame)
+revertBtn.Text = "🔄 Вернуть"
+revertBtn.Size = UDim2.new(0.5,-10,0,30)
+revertBtn.Position = UDim2.new(0,5,0,40)
+revertBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+revertBtn.TextColor3 = Color3.fromRGB(255,255,255)
 
-local close = Instance.new("TextButton", fr)
-close.Text = "❌"
-close.Size = UDim2.new(0,30,0,30)
-close.Position = UDim2.new(1,-35,0,5)
-close.BackgroundColor3 = Color3.fromRGB(80,30,30)
-close.TextColor3 = Color3.fromRGB(255,255,255)
+local closeBtn = Instance.new("TextButton", frame)
+closeBtn.Text = "❌"
+closeBtn.Size = UDim2.new(0.5,-10,0,30)
+closeBtn.Position = UDim2.new(0.5,5,0,40)
+closeBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+closeBtn.TextColor3 = Color3.fromRGB(255,255,255)
 
--- 💡 Логика
-ok.MouseButton1Click:Connect(function()
-    local id = txt.Text
-    if id and id ~= "" then
-        chr = lp.Character or lp.CharacterAdded:Wait()
-        if not originalShirt or not originalPants then
-            originalShirt = chr:FindFirstChildOfClass("Shirt") and chr:FindFirstChildOfClass("Shirt").ShirtTemplate
-            originalPants = chr:FindFirstChildOfClass("Pants") and chr:FindFirstChildOfClass("Pants").PantsTemplate
-        end
+-- ✅ Функции
+local function saveMyAccessories()
+	myAccessories = {}
+	for _,v in ipairs((lp.Character or {}).:GetChildren()) do
+		if v:IsA("Accessory") then
+			table.insert(myAccessories, v.Name)
+		end
+	end
+end
 
-        if chr:FindFirstChildOfClass("Shirt") then
-            chr:FindFirstChildOfClass("Shirt").ShirtTemplate = "rbxassetid://"..id
-        end
-        if chr:FindFirstChildOfClass("Pants") then
-            chr:FindFirstChildOfClass("Pants").PantsTemplate = "rbxassetid://"..id
-        end
-    end
+local function removeCurrent()
+	if lp.Character and currentAdded then
+		local acc = lp.Character:FindFirstChild(currentAdded)
+		if acc then acc:Destroy() end
+		currentAdded = nil
+	end
+end
+
+local function addAccessory(assetId)
+	removeCurrent()
+	local new = game:GetService("InsertService"):LoadAsset(assetId)
+	if new then
+		for _,obj in ipairs(new:GetChildren()) do
+			if obj:IsA("Accessory") then
+				obj.Parent = lp.Character
+				currentAdded = obj.Name
+			end
+		end
+		new:Destroy()
+	end
+end
+
+local function revertSkin()
+	removeCurrent()
+	-- Вернём старые аксессуары
+	for _,name in ipairs(myAccessories) do
+		local asset = game:GetService("InsertService"):LoadAsset(name)
+		if asset then
+			for _,obj in ipairs(asset:GetChildren()) do
+				if obj:IsA("Accessory") then
+					obj.Parent = lp.Character
+				end
+			end
+			asset:Destroy()
+		end
+	end
+end
+
+-- 🛠 Кнопки
+okBtn.MouseButton1Click:Connect(function()
+	local id = tonumber(input.Text)
+	if id then addAccessory(id) end
 end)
 
-revert.MouseButton1Click:Connect(function()
-    chr = lp.Character or lp.CharacterAdded:Wait()
-    if originalShirt and chr:FindFirstChildOfClass("Shirt") then
-        chr:FindFirstChildOfClass("Shirt").ShirtTemplate = originalShirt
-    end
-    if originalPants and chr:FindFirstChildOfClass("Pants") then
-        chr:FindFirstChildOfClass("Pants").PantsTemplate = originalPants
-    end
+revertBtn.MouseButton1Click:Connect(revertSkin)
+
+closeBtn.MouseButton1Click:Connect(function()
+	gui:Destroy()
 end)
 
-close.MouseButton1Click:Connect(function()
-    gui:Destroy()
+-- ✨ После смерти вернуть
+lp.CharacterAdded:Connect(function(newChar)
+	char = newChar
+	wait(1)
+	if currentAdded then
+		addAccessory(currentAdded)
+	end
 end)
 
--- 🪄 Готово!g
+-- 🔥 В начале
+saveMyAccessories()
