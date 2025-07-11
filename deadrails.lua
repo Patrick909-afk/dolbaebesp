@@ -75,4 +75,4 @@ close.MouseButton1Click:Connect(function()
     gui:Destroy()
 end)
 
--- 🪄 Готово!
+-- 🪄 Готово!g
